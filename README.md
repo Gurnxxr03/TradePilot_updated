@@ -1,122 +1,156 @@
-# TradePilot — Local Setup
+# TradePilot
 
-Your app has a working AI Mentor chat (powered by Groq) and real accounts (signup/signin),
-backed by a shared Postgres database so the whole team sees the same data.
+An AI-powered finance mentor app. Originally designed in Stitch, now a working full-stack app with
+real accounts, a live AI chat mentor, and several interactive features backed by a shared Postgres database.
 
-## 1. One-time setup: Node.js
+---
 
-You need **Node.js** installed. If you don't have it:
-- Go to https://nodejs.org, download the "LTS" version, install it (just click Next through the installer).
+## What's built so far
 
-## 2. One-time setup: shared database (do this once as a team)
+| Feature | Where | Status |
+|---|---|---|
+| **Signup / Sign in / Logout** | `signup.html`, `signin.html` | Real accounts, bcrypt-hashed passwords, JWT sessions |
+| **Page protection** | Dashboard, Explore, Today, Learn, Smart Alerts | Redirects to Sign In if not logged in. Home is public. |
+| **AI Mentor chat** | Sidebar on every app page + a mini widget on Explore | Powered by Groq's API; conversation history saved per-account |
+| **Today's Narrative** | `today.html` | AI-generated daily market summary, regenerate on demand |
+| **Smart Alerts** | `alerts.html` | Create price alerts (above/below a target); auto-checked against simulated prices |
+| **Learn — Finance Quiz** | `learn.html` | 7-question interactive quiz, scored server-side, best score saved per-account |
+| **Dashboard — Holdings** | `dashboard.html` | Add/remove stock positions; market value & gain/loss calculated live |
+| **Watchlist** | Add from Explore, view/remove on Dashboard | Saved per-account |
+| **Explore — Search** | `explore.html` | Search any stock symbol, see a simulated quote |
+| **Settings** | `settings.html` | Update name, change password, toggle dark mode, log out |
 
-This app uses a real Postgres database via **Supabase** (free tier) so everyone sees the same
-accounts and data — no per-person local databases to keep in sync.
+**Important:** there is no real market data feed connected. All prices (Alerts, Watchlist, Holdings,
+Explore search) come from a deterministic simulator in `server/mock-market.js`. This is intentionally
+isolated in one file so it can be swapped for a real market data API later without touching anything else.
 
-**One team member sets this up once:**
-1. Go to https://supabase.com → sign up (free, no credit card needed) → "New Project"
-2. Pick any project name and a database password (save this password somewhere safe)
-3. Once the project is ready, go to **Project Settings → Database → Connection string → URI**
-4. Copy that connection string (looks like `postgresql://postgres:[YOUR-PASSWORD]@...supabase.co:5432/postgres`)
-5. Replace `[YOUR-PASSWORD]` in the string with the actual database password from step 2
+A full manual testing checklist (step-by-step, with expected results for every feature above) is in `TESTING.md`.
 
-**Share with teammates** (through a password manager or private message — never through git):
-- The finished `DATABASE_URL` connection string
-- A `JWT_SECRET` value (any long random string — just needs to be the same for everyone)
+---
 
-**Each teammate then:**
-1. Copies `server/.env.example` to a new file named `server/.env`
-2. Fills in the shared `DATABASE_URL` and `JWT_SECRET`, plus their own personal `GROQ_API_KEY`
-   (free, from https://console.groq.com — each person should grab their own key)
+## Tech stack
 
-The first time the server starts, it automatically creates the `users` table if it doesn't exist —
-no manual database setup beyond the connection string.
+- **Frontend:** static HTML + Tailwind (via CDN) + vanilla JS — no build step
+- **Backend:** Node.js + Express
+- **Database:** Postgres (via Supabase's free tier) — shared by the whole team
+- **AI:** Groq API (Llama 3.3 70B) for chat and narrative generation
+- **Auth:** JWT tokens + bcrypt password hashing
 
-## 3. Every time you want to run the app
+---
 
-1. Open a terminal in the `server` folder:
-   - **Windows:** open the `server` folder, click the address bar, type `cmd`, hit Enter
-   - **Mac:** right-click the `server` folder → "New Terminal at Folder"
+## Running it locally
 
-2. First time only, install dependencies:
+### 1. Install Node.js
+Download the "LTS" version from https://nodejs.org if you don't have it.
+
+### 2. Get the shared database connection (ask a teammate)
+This app uses one shared Postgres database (via Supabase) so everyone sees the same accounts and data.
+Whoever set up the Supabase project should share:
+- The `DATABASE_URL` connection string
+- The `JWT_SECRET` value
+
+...through a private channel (password manager, DM) — **never through GitHub or Slack in plaintext long-term.**
+
+If you're the one setting it up for the first time:
+1. Go to https://supabase.com → sign up (free) → "New Project"
+2. Set a database password (save it)
+3. Click the **"Connect"** button at the top of the project dashboard → find the **connection string / URI**
+4. Copy it and swap in your actual database password where it says `[YOUR-PASSWORD]`
+
+### 3. Get your own Groq API key (free)
+Each teammate should get their own personal key from https://console.groq.com — don't share one key across the team.
+
+### 4. Configure your environment
+```
+cd server
+cp .env.example .env
+```
+Open `server/.env` and fill in:
+```
+GROQ_API_KEY=your-own-groq-key
+PORT=3001
+JWT_SECRET=shared-value-from-teammate
+DATABASE_URL=shared-connection-string-from-teammate
+```
+
+### 5. Install and run
+```
+npm install
+npm start
+```
+You should see:
+```
+✅ Connected to database, all tables ready.
+✅ TradePilot server running!
+   Open this in your browser: http://localhost:3001/home.html
+```
+
+Open that link in your browser. The `users`, `alerts`, `holdings`, `watchlist`, `chat_messages`, and
+`quiz_attempts` tables are created automatically the first time the server starts — no manual database
+setup beyond the connection string.
+
+---
+
+## Pushing to GitHub
+
+This project is already set up as a git repository with a first commit made, and `.gitignore` already
+excludes `node_modules/` and `.env` (so secrets never get committed).
+
+To push it to your own GitHub:
+
+1. Create a new empty repository on https://github.com (don't initialize it with a README/gitignore — this project already has them)
+2. In this project's root folder, run:
    ```
-   npm install
+   git remote add origin https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
+   git branch -M main
+   git push -u origin main
    ```
-
-3. Start the server:
+3. Share the repo URL with your team — everyone else can clone it:
    ```
-   npm start
+   git clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
    ```
+   ...then follow the "Running it locally" steps above (each person still needs their own `server/.env`,
+   since that file is never committed).
 
-4. You should see:
-   ```
-   ✅ Connected to database, users table ready.
-   ✅ TradePilot server running!
-      Open this in your browser: http://localhost:3001/home.html
-   ```
+---
 
-5. Open that link in your browser — **not** by double-clicking the HTML files anymore, since the chat and login features need the server running.
+## Deploying (so there's one live version everyone can check)
 
-To stop the server, go back to the terminal and press `Ctrl + C`.
+Recommended host: **Render** (https://render.com) — free tier available, deploys automatically every
+time you push to GitHub.
 
-## Signup / Sign in
+### One-time setup
+1. Push this repo to GitHub first (see above)
+2. Go to https://render.com → sign up (can use your GitHub account) → **"New +" → "Web Service"**
+3. Connect your GitHub repo
+4. Configure:
+   - **Root Directory:** `server`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+5. Under **Environment Variables**, add the same three values from your `.env`:
+   - `GROQ_API_KEY`
+   - `JWT_SECRET`
+   - `DATABASE_URL`
+   
+   (Don't add `PORT` — Render sets this automatically and the app already reads `process.env.PORT`.)
+6. Click **"Create Web Service"**
 
-- `http://localhost:3001/signup.html` — create an account (name, email, password)
-- `http://localhost:3001/signin.html` — log in
-- **Dashboard, Explore, Today, Learn, and Smart Alerts** all require being logged in — if you're not, you'll be redirected to Sign In automatically. Only **Home** is public.
-- Click the account icon (top right) while logged in to log out
-- Passwords are hashed with bcrypt before storage — never saved in plain text
-- Signup requires a valid email format and a password of 8+ characters with at least one letter and one number — checked live in the browser and again on the server
+Render will build and deploy the app, giving you a live URL like `https://tradepilot.onrender.com`.
 
-## AI Mentor chat
+### From then on
+Every time anyone pushes to the `main` branch on GitHub, Render automatically redeploys — so the live
+version always reflects the latest pushed code, and everyone can test against that same shared, live
+version instead of their own local copy.
 
-- A persistent chat panel appears in the sidebar on every app page (not just Home)
-- Ask anything — it's powered by Groq's API through your local server
-- Your conversation is saved per-account — leave and come back, it's still there
+**Note:** the free tier on Render spins the service down after periods of inactivity, so the very first
+request after a quiet period can take ~30-60 seconds to wake back up. This is normal for free hosting tiers.
 
-## Today's Narrative
-
-- Open the "Today's Narrative" page — an AI-generated market summary loads automatically
-- Click "Regenerate" any time for a fresh take
-
-## Smart Alerts
-
-- Click "Create New Alert" to set a price alert (symbol, above/below, target price)
-- Since there's no real live market feed connected, prices are **simulated** (a deterministic drift, not random) — this is clearly a placeholder for a real market data API later
-- Alerts you create appear under "Your Alerts" and automatically flip to "Triggered" once the simulated price crosses your target
-- Delete any alert you no longer need
-
-## Learn — Finance Quiz
-
-- The "Daily Quiz" card is now a real multi-question quiz — answer each question and see your score at the end
-- Your best score is saved per-account and shown each time you visit
-
-## Dashboard — Your Holdings
-
-- Click "Add Holding" to track a position (symbol, quantity, average cost)
-- Market value and gain/loss are calculated using simulated prices (see note on Smart Alerts above)
-- Remove any holding you no longer want to track
-
-## Watchlist
-
-- On the Explore page, click "Watchlist" to save the current symbol
-- View and remove saved symbols from the Dashboard's "Your Watchlist" card
-
-## Explore — Search any symbol
-
-- Type any stock symbol (e.g. AAPL, TSLA, MSFT) into the top search bar and press Enter
-- The price header updates with a simulated quote for that symbol — same simulated pricing engine used by Alerts and the Watchlist
-
-## Settings
-
-- Reachable from the "Settings" link in the AI Mentor sidebar on any app page
-- Update your display name
-- Change your password (requires current password)
-- Toggle dark mode (saved locally in your browser)
-- Log out
+---
 
 ## Notes for the team
-- `server/.env` holds real secrets (API key, JWT secret, database URL) — **never commit this file.** It's already excluded via `.gitignore`.
+
+- `server/.env` holds real secrets — **never commit this file.** `.gitignore` already excludes it.
 - `server/.env.example` is the template every teammate copies and fills in themselves.
-- The Groq key currently in use was shared in a chat conversation — regenerate a fresh one at console.groq.com when convenient.
 - Everyone should use the same `DATABASE_URL` and `JWT_SECRET`, but their own individual `GROQ_API_KEY`.
+- The same environment variables (`DATABASE_URL`, `JWT_SECRET`, `GROQ_API_KEY`) need to be set in Render's
+  dashboard too, separately from your local `.env` — they don't sync automatically.
