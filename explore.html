@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Explore Market | TradePilot</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            border-radius: 20px;
+        }
+        .ai-border {
+            border-left: 2px solid;
+            border-image: linear-gradient(to bottom, #0F172A, #565e74) 1;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #e4e2e4;
+            border-radius: 10px;
+        }
+        .chart-gradient {
+            background: linear-gradient(180deg, rgba(84, 95, 115, 0.1) 0%, rgba(255, 255, 255, 0) 100%);
+        }
+        .rounded-20 {
+            border-radius: 20px;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-dim": "#dcd9db",
+                        "on-surface": "#1b1b1d",
+                        "surface-variant": "#e4e2e4",
+                        "on-tertiary-container": "#98805d",
+                        "surface-container-highest": "#e4e2e4",
+                        "inverse-on-surface": "#f3f0f2",
+                        "surface-tint": "#565e74",
+                        "background": "#fcf8fa",
+                        "tertiary-fixed": "#fcdeb5",
+                        "surface": "#fcf8fa",
+                        "on-primary-container": "#7c839b",
+                        "on-secondary-fixed-variant": "#3c475a",
+                        "surface-container-lowest": "#ffffff",
+                        "outline": "#76777d",
+                        "secondary": "#545f73",
+                        "surface-container-low": "#f6f3f5",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed-dim": "#bcc7de",
+                        "secondary-fixed": "#d8e3fb",
+                        "on-background": "#1b1b1d",
+                        "on-tertiary-fixed": "#271901",
+                        "on-tertiary-fixed-variant": "#574425",
+                        "on-primary-fixed-variant": "#3f465c",
+                        "on-surface-variant": "#45464d",
+                        "tertiary-container": "#271901",
+                        "primary-container": "#131b2e",
+                        "tertiary-fixed-dim": "#dec29a",
+                        "primary-fixed-dim": "#bec6e0",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-secondary": "#ffffff",
+                        "surface-container-high": "#eae7e9",
+                        "surface-container": "#f0edef",
+                        "on-primary-fixed": "#131b2e",
+                        "on-secondary-container": "#586377",
+                        "secondary-container": "#d5e0f8",
+                        "primary": "#000000",
+                        "surface-bright": "#fcf8fa",
+                        "tertiary": "#000000",
+                        "error": "#ba1a1a",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#111c2d",
+                        "inverse-primary": "#bec6e0",
+                        "on-error": "#ffffff",
+                        "outline-variant": "#c6c6cd",
+                        "primary-fixed": "#dae2fd",
+                        "inverse-surface": "#303032"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "20": "20px",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1280px",
+                        "gutter": "24px",
+                        "sm": "16px",
+                        "md": "24px",
+                        "base": "4px",
+                        "xs": "8px",
+                        "lg": "40px",
+                        "xl": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "title-md": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "title-md": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                        "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body data-auth="required" class="bg-background font-body-md text-on-surface">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full bg-white/70 backdrop-blur-md shadow-sm border-b border-outline-variant/30 z-50">
+<div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
+<div class="flex items-center gap-xl">
+<span class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</span>
+<div class="hidden md:flex gap-md items-center">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="today.html">Today's Narrative</a>
+<a class="text-primary border-b-2 border-primary pb-1 text-label-md font-label-md" href="explore.html">Explore</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="alerts.html">Smart Alerts</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="learn.html">Learn</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="dashboard.html">Dashboard</a>
+</div>
+</div>
+<div class="flex items-center gap-md">
+<div class="relative group hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input id="market-search-input" class="bg-surface-container-low border-none rounded-full pl-10 pr-4 py-2 text-label-md w-64 focus:ring-2 focus:ring-secondary/20 transition-all" placeholder="Search markets... (e.g. AAPL)" type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">dark_mode</button>
+<a id="nav-account-btn" href="signin.html" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary cursor-pointer">account_circle</a>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (AI Mentor) -->
+<aside class="fixed right-0 top-16 h-[calc(100vh-64px)] w-80 bg-surface border-l border-outline-variant/30 shadow-xl hidden xl:flex flex-col p-sm z-40">
+<div class="p-md flex flex-col items-center text-center gap-xs">
+<div class="w-20 h-20 rounded-full overflow-hidden border-2 border-primary-fixed mb-xs">
+<img class="w-full h-full object-cover" data-alt="AI persona avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZEH8Ha65uQsff3zRFYaXJGJAj0imx5dL7Mr1wmslLXN1o2hVHFFyC1QRk6S_nuOEm2aUtm2M84v2iu22xVm49yrGnqrc7Py4GNO3aE5J06f3odF3t_cMRvLW25wh0QJD2U10gI774m42djGUj_F6WMvaOLn8hDZh1tRTDeRrfdHW-CDxsRWHZNo0TbZLAHOft9F1Pb8UlVhCjLs3t8hYrphw8Gps2gvfA0P7STMQkvm764X1XqOnjQ_ZmuCDwIZ-euH99L_iqv6w"/>
+</div>
+<h3 class="text-headline-sm font-headline-sm font-semibold">AI Mentor</h3>
+<p class="text-label-md text-on-surface-variant">Ask me anything about the markets</p>
+</div>
+<div class="flex-1 overflow-y-auto mt-md space-y-2">
+<div class="bg-primary-container text-on-primary-container rounded-20 mx-2 my-1 px-4 py-3 flex items-center gap-3">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+<span class="text-label-md">AI Mentor</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20 mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors">
+<span class="material-symbols-outlined">school</span>
+<span class="text-label-md">Knowledge Hub</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20 mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-label-md">Market Mood</span>
+</div>
+<div class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20 mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors">
+<span class="material-symbols-outlined">ads_click</span>
+<span class="text-label-md">Daily Goals</span>
+</div>
+</div>
+<div class="flex-1 flex flex-col min-h-0 mt-md px-2">
+<p class="text-label-sm font-bold text-on-surface-variant uppercase tracking-wider mb-xs">Chat</p>
+<div id="global-ai-chat-log" class="flex-1 overflow-y-auto space-y-2 mb-sm"></div>
+<div class="relative">
+<input id="global-ai-chat-input" class="w-full bg-white border border-outline-variant/30 rounded-xl pr-10 text-xs py-3 px-3 focus:ring-primary focus:outline-none" placeholder="Ask AI Mentor..." type="text"/>
+<button id="global-ai-chat-send" class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-primary">arrow_forward</button>
+</div>
+</div>
+<div class="mt-auto pt-md border-t border-outline-variant/20">
+<button class="w-full py-3 bg-secondary-container text-on-secondary-container rounded-20 font-bold text-label-md hover:opacity-90 transition-opacity mb-md">
+            Explain Like I'm 18
+        </button>
+<div class="flex flex-col gap-1">
+<a href="settings.html" class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20 mx-2 my-1 px-4 py-3 flex items-center gap-3 cursor-pointer">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-md">Settings</span>
+</a>
+<div class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20 mx-2 my-1 px-4 py-3 flex items-center gap-3 cursor-pointer">
+<span class="material-symbols-outlined">help</span>
+<span class="text-label-md">Help</span>
+</div>
+</div>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="mt-16 xl:mr-80 p-gutter max-w-container-max mx-auto">
+<!-- Header & Profile Area -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-lg items-end mb-xl">
+<div class="lg:col-span-8">
+<div class="flex items-center gap-xs mb-sm">
+<span class="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded">NASDAQ</span>
+<span class="text-label-md text-on-surface-variant">Information Technology</span>
+</div>
+<h1 id="stock-name" class="text-display-lg font-display-lg text-on-surface mb-xs">NVIDIA Corp (NVDA)</h1>
+<div class="flex items-baseline gap-md">
+<span id="stock-price" class="text-headline-lg font-headline-lg">$894.52</span>
+<span id="stock-change" class="text-green-600 font-semibold flex items-center gap-1">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span id="stock-change-text">+2.45% (+$21.34)</span>
+                </span>
+<span class="text-label-md text-on-surface-variant ml-xs">After Hours data unavailable for simulated symbols</span>
+</div>
+</div>
+<div class="lg:col-span-4 flex justify-end gap-sm items-center">
+<button class="p-3 bg-surface-container-low border border-outline-variant text-on-surface rounded-20 hover:bg-surface-variant/30 transition-all flex items-center justify-center" title="Export PDF">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+</button>
+<button id="watchlist-btn" class="px-6 py-3 bg-white border border-outline-variant text-on-surface rounded-20 font-semibold hover:bg-surface-container-low transition-all flex items-center gap-2">
+<span class="material-symbols-outlined">add</span>
+<span id="watchlist-btn-text">Watchlist</span>
+            </button>
+<button class="px-6 py-3 bg-primary text-white rounded-20 font-semibold hover:opacity-90 shadow-lg shadow-primary/20 transition-all">
+                Trade Now
+            </button>
+</div>
+</section>
+<!-- Bento Grid Content -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-md">
+<!-- Chart Section -->
+<div class="lg:col-span-8 glass-card p-md overflow-hidden relative">
+<div class="flex justify-between items-center mb-lg">
+<div class="flex gap-xs">
+<button class="px-3 py-1 bg-primary text-white text-label-sm rounded-full">1D</button>
+<button class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1W</button>
+<button class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1M</button>
+<button class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">3M</button>
+<button class="px-3 py-1 hover:bg-surface-container text-label-sm rounded-full transition-colors">1Y</button>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary">fullscreen</button>
+</div>
+<div class="h-80 w-full relative">
+<img class="w-full h-full object-contain" data-alt="Stock chart" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmyGoye9dTsF5pTT_cD8xjvaCTzRUZ_hMz3euHYQ599vKjKq9wzfHJpT9ZnMargGEDR1NCe_ydqJCbEwOdXl9MmCDrFJvN7rrXLCTrZBybcMjEVYUM1hpPaqNkr_RDo3WbuS_0mMS1EdoyXF_4cypIo3FbE0gyMn4siHsQ0EBHCZTSuvKMubztJUBvXEE5nD838QO00MzEOGCtjqQYh7th_gW2s8vvj4iOnq3TK-8ajcZqoADeIBiEVIxsYWbrN1Du9VahdUoOAnI"/>
+<div class="absolute top-4 left-4 bg-white/80 backdrop-blur-sm p-3 rounded-lg border border-outline-variant shadow-sm max-w-xs">
+<p class="text-label-sm font-bold text-primary mb-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">info</span> 
+                        RSI: 64.2
+                    </p>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+                        The "Relative Strength Index" shows the stock is gaining momentum but isn't yet "overbought" (too expensive).
+                    </p>
+</div>
+</div>
+</div>
+<!-- AI Insights Panel -->
+<div class="lg:col-span-4 flex flex-col gap-md">
+<div class="bg-primary-container p-md rounded-20 text-on-primary-container relative overflow-hidden ai-border">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-bold flex items-center gap-2">
+<span class="material-symbols-outlined">magic_button</span>
+                        AI Narrative
+                    </h3>
+<span class="bg-secondary text-white text-[10px] px-2 py-0.5 rounded-full font-bold">98% CONFIDENCE</span>
+</div>
+<p class="text-label-md leading-relaxed mb-md">
+                    NVIDIA is surging today following a breakthrough in Blackwell chip yield reports and increased AI infrastructure spending from Google. This suggests sustained dominance in the datacenter segment through Q4.
+                </p>
+<div class="space-y-3">
+<div class="flex items-center gap-2 text-xs">
+<span class="material-symbols-outlined text-green-500 text-sm">verified</span>
+<span>Strong Buy Consensus</span>
+</div>
+<div class="flex items-center gap-2 text-xs">
+<span class="material-symbols-outlined text-yellow-500 text-sm">warning</span>
+<span>Risk: Supply chain concentration in SE Asia.</span>
+</div>
+</div>
+</div>
+<!-- Sentiment Meter -->
+<div class="glass-card p-md">
+<h4 class="text-label-md font-bold mb-md uppercase tracking-wider text-on-surface-variant">Market Mood</h4>
+<div class="flex flex-col gap-sm">
+<div class="flex justify-between text-xs font-bold">
+<span>Bearish</span>
+<span>Bullish</span>
+</div>
+<div class="h-2 w-full bg-surface-container rounded-full overflow-hidden flex">
+<div class="h-full bg-error w-1/5"></div>
+<div class="h-full bg-green-500 w-4/5"></div>
+</div>
+<p class="text-xs text-on-surface-variant">Institutional sentiment is exceptionally high due to the Blackwell cycle anticipation.</p>
+</div>
+</div>
+</div>
+<!-- Direct Financial Impact (New Section) -->
+<div class="lg:col-span-12 glass-card p-md grid grid-cols-1 lg:grid-cols-3 gap-lg">
+<div class="space-y-4">
+<h4 class="text-label-sm font-bold text-on-surface-variant flex items-center gap-2 uppercase">
+<span class="material-symbols-outlined text-base">account_balance_wallet</span>
+                    P&amp;L Shift Prediction
+                </h4>
+<div class="flex items-center gap-md">
+<div class="text-headline-lg font-bold text-green-600">+$4.2B</div>
+<div class="text-xs text-on-surface-variant">Estimated quarterly revenue upside based on current Blackwell chip adoption rates.</div>
+</div>
+<div class="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
+<div class="h-full bg-green-500 w-[85%]"></div>
+</div>
+</div>
+<div class="space-y-4">
+<h4 class="text-label-sm font-bold text-on-surface-variant flex items-center gap-2 uppercase">
+<span class="material-symbols-outlined text-base">hub</span>
+                    AI Exposure Analysis
+                </h4>
+<div class="flex flex-wrap gap-xs">
+<span class="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full">CORE INFRA (94%)</span>
+<span class="px-3 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full">DATA CENTER (82%)</span>
+<span class="px-3 py-1 bg-surface-container text-on-surface-variant text-[10px] font-bold rounded-full">AUTOMOTIVE (4%)</span>
+</div>
+<p class="text-xs text-on-surface-variant italic">High correlation with Big Tech capex cycles.</p>
+</div>
+<div class="space-y-4">
+<h4 class="text-label-sm font-bold text-on-surface-variant flex items-center gap-2 uppercase">
+<span class="material-symbols-outlined text-base">alt_route</span>
+                    Impacted Stocks List
+                </h4>
+<div class="space-y-2">
+<div class="flex justify-between items-center text-xs">
+<span class="font-bold">SMCI</span>
+<span class="text-green-600 font-bold">+5.2%</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="font-bold">MU</span>
+<span class="text-green-600 font-bold">+2.8%</span>
+</div>
+<div class="flex justify-between items-center text-xs">
+<span class="font-bold">ARM</span>
+<span class="text-green-600 font-bold">+1.5%</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Technical & Financial Summary -->
+<div class="lg:col-span-12 grid grid-cols-1 md:grid-cols-3 gap-md">
+<div class="glass-card p-md">
+<h4 class="text-label-sm font-bold text-on-surface-variant mb-md flex items-center gap-2">
+<span class="material-symbols-outlined text-base">analytics</span>
+                    VALUATION
+                </h4>
+<div class="space-y-4">
+<div class="flex justify-between">
+<span class="text-label-md">P/E Ratio</span>
+<span class="text-label-md font-bold">72.4x</span>
+</div>
+<div class="flex justify-between">
+<span class="text-label-md">Market Cap</span>
+<span class="text-label-md font-bold">$2.24T</span>
+</div>
+<p class="text-xs text-on-surface-variant pt-2 border-t border-outline-variant/10">
+                        P/E Ratio helps you understand if you're paying a premium for growth. NVIDIA's is high, reflecting high expectations.
+                    </p>
+</div>
+</div>
+<div class="glass-card p-md">
+<h4 class="text-label-sm font-bold text-on-surface-variant mb-md flex items-center gap-2">
+<span class="material-symbols-outlined text-base">payments</span>
+                    FINANCIAL HEALTH
+                </h4>
+<div class="space-y-4">
+<div class="flex justify-between">
+<span class="text-label-md">Revenue Growth</span>
+<span class="text-label-md font-bold text-green-600">+265%</span>
+</div>
+<div class="flex justify-between">
+<span class="text-label-md">Gross Margin</span>
+<span class="text-label-md font-bold">76.0%</span>
+</div>
+<p class="text-xs text-on-surface-variant pt-2 border-t border-outline-variant/10">
+                        Gross Margin shows how much profit is left after production costs. 76% is exceptionally strong for hardware.
+                    </p>
+</div>
+</div>
+<div class="glass-card p-md">
+<h4 class="text-label-sm font-bold text-on-surface-variant mb-md flex items-center gap-2">
+<span class="material-symbols-outlined text-base">psychology</span>
+                    AI VERDICT
+                </h4>
+<div class="flex items-center gap-4 mb-4">
+<div class="w-12 h-12 rounded-full border-4 border-green-500 border-r-transparent animate-spin duration-[3s] flex items-center justify-center">
+<span class="text-xs font-bold animate-none">8.4</span>
+</div>
+<div>
+<p class="text-label-md font-bold">Overweight</p>
+<p class="text-xs text-on-surface-variant">Recommended for Growth</p>
+</div>
+</div>
+<button class="w-full py-2 text-label-sm font-bold text-secondary border border-secondary/20 rounded-lg hover:bg-secondary/5 transition-colors">
+                    Compare to S&amp;P 500
+                </button>
+</div>
+</div>
+<!-- News & Timeline -->
+<div class="lg:col-span-8 flex flex-col gap-md">
+<div class="flex items-center justify-between">
+<h2 class="text-title-md font-title-md">Relevant Intelligence</h2>
+<button class="text-label-sm text-primary font-bold">View All</button>
+</div>
+<div class="space-y-4">
+<div class="glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all">
+<div class="w-24 h-24 rounded-xl overflow-hidden shrink-0">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Datacenter news" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBpIHPmdC13QW6g6GaqYwvp8HU8F9ltPo4kFBR3tAcuBxPS9ctKqZt_K_TDIfiaJI6Z_QAUlLEIZKYe54XtQ0PJOm1Q05S9PDTcH4KsjNGGk9WYtetaJk8X_OwmMGQW8SI445sxwdTM0C9HoMbQew5_StLki1XpH0cxeenIhjM2788p4wtcchytW7nfGgUdbpVMurUyqBTvvxo2yRxmpC3aQnsfYHSkFMkI5skX7SbbXd0_u9QSqGm7TW1yIupdnQRD44vVi7qlyR8"/>
+</div>
+<div class="flex-1">
+<div class="flex gap-2 mb-2">
+<span class="bg-blue-100 text-blue-600 text-[10px] px-2 py-0.5 rounded-full font-bold">AI INDUSTRY</span>
+<span class="text-label-sm text-on-surface-variant">2h ago</span>
+</div>
+<h4 class="text-label-md font-bold group-hover:text-primary transition-colors">NVIDIA Expands Strategic Partnership with Google Cloud for Next-Gen AI</h4>
+<p class="text-xs text-on-surface-variant mt-1 line-clamp-1">The collaboration aims to optimize Blackwell GPU infrastructure for large-scale training...</p>
+</div>
+</div>
+<div class="glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all">
+<div class="w-24 h-24 rounded-xl overflow-hidden shrink-0">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform" data-alt="Chip news" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3IO3aFlhHC3NWeEfhikZoZmHuNUoiXUgEHYsz4eYJ25rzCuGCUf8SROje_GLnZmo85oc9QeOap_jkDmimLCKBNUJlgSM7qqjdCndDZHB3lnltvlUErZaKwqwH-9CtSJklipdW4DaMvu9QZgAY-MvuN7YmuTElpi_Ut_HQWHDzM_bj-1ZuuiDe8zGlz40rjOZsfZgdekBnNN73RdG1moWl2eIFJY4Tb6n47KbaXmsYExqYB1Y5VNEJjZWBkDFN3mCiryhsIxebxy8"/>
+</div>
+<div class="flex-1">
+<div class="flex gap-2 mb-2">
+<span class="bg-green-100 text-green-600 text-[10px] px-2 py-0.5 rounded-full font-bold">MARKET ANALYSIS</span>
+<span class="text-label-sm text-on-surface-variant">5h ago</span>
+</div>
+<h4 class="text-label-md font-bold group-hover:text-primary transition-colors">Why Analysts are Raising NVDA Price Targets Ahead of GTC Conference</h4>
+<p class="text-xs text-on-surface-variant mt-1 line-clamp-1">Consensus shifts toward $1,000 as software revenue begins to materialize...</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Related Stocks & Ask AI -->
+<div class="lg:col-span-4 flex flex-col gap-md">
+<div class="glass-card p-md">
+<h4 class="text-label-md font-bold mb-md">Ecosystem Neighbors</h4>
+<div class="space-y-4">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs">AMD</div>
+<div>
+<p class="text-xs font-bold">Advanced Micro</p>
+<p class="text-[10px] text-on-surface-variant">Semiconductors</p>
+</div>
+</div>
+<span class="text-xs font-bold text-green-600">+1.2%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs">AVGO</div>
+<div>
+<p class="text-xs font-bold">Broadcom Inc</p>
+<p class="text-[10px] text-on-surface-variant">Connectivity</p>
+</div>
+</div>
+<span class="text-xs font-bold text-error">-0.4%</span>
+</div>
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-xs">
+<div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center font-bold text-xs">TSM</div>
+<div>
+<p class="text-xs font-bold">TSMC</p>
+<p class="text-[10px] text-on-surface-variant">Foundry</p>
+</div>
+</div>
+<span class="text-xs font-bold text-green-600">+3.1%</span>
+</div>
+</div>
+</div>
+<!-- Ask AI Interaction -->
+<div class="bg-surface-container-low rounded-20 p-md border border-secondary/10 flex flex-col gap-sm">
+<p class="text-label-sm font-bold text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-base">chat_bubble</span>
+                    Deep Dive NVDA
+                </p>
+<div class="flex flex-col gap-xs" id="ai-suggested-prompts">
+<button class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"Will the supply chain issues hurt Q4?"</button>
+<button class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"Explain Blackwell architecture to a 5-year old."</button>
+<button class="suggested-prompt w-full text-left p-2 bg-white rounded-lg text-xs hover:bg-primary-container hover:text-white transition-all">"How does NVDA debt compare to Apple?"</button>
+</div>
+<div id="ai-chat-log" class="flex flex-col gap-xs max-h-64 overflow-y-auto"></div>
+<div class="relative">
+<input id="ai-chat-input" class="w-full bg-white border-outline-variant/30 rounded-xl pr-10 text-xs py-3 focus:ring-primary" placeholder="Ask TradePilot AI..." type="text"/>
+<button id="ai-chat-send" class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-primary">arrow_forward</button>
+</div>
+</div>
+</div>
+</div>
+<script>
+(function () {
+  const API_URL = '/api/chat';
+  const chatLog = document.getElementById('ai-chat-log');
+  const input = document.getElementById('ai-chat-input');
+  const sendBtn = document.getElementById('ai-chat-send');
+  const suggestedPrompts = document.querySelectorAll('.suggested-prompt');
+
+  function addBubble(text, sender) {
+    const bubble = document.createElement('div');
+    bubble.className = sender === 'user'
+      ? 'self-end bg-primary text-white text-xs p-2 rounded-lg max-w-[85%]'
+      : 'self-start bg-white text-on-surface text-xs p-2 rounded-lg max-w-[85%] border border-outline-variant/20';
+    bubble.style.whiteSpace = 'pre-wrap';
+    bubble.textContent = text;
+    chatLog.appendChild(bubble);
+    chatLog.scrollTop = chatLog.scrollHeight;
+    return bubble;
+  }
+
+  async function sendMessage(message) {
+    if (!message || !message.trim()) return;
+    addBubble(message, 'user');
+    input.value = '';
+    const loadingBubble = addBubble('Thinking...', 'ai');
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(window.TradePilotAuth ? window.TradePilotAuth.authHeader() : {}) },
+        body: JSON.stringify({
+          message: message,
+          context: 'User is viewing NVDA (Nvidia) stock details on the Explore Market screen.'
+        })
+      });
+      const data = await res.json();
+      loadingBubble.textContent = res.ok ? data.reply : `Error: ${data.error || 'Something went wrong.'}`;
+    } catch (err) {
+      loadingBubble.textContent = 'Could not reach the AI server. Make sure the local server is running (see README).';
+    }
+  }
+
+  sendBtn.addEventListener('click', () => sendMessage(input.value));
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage(input.value);
+  });
+  suggestedPrompts.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const question = btn.textContent.replace(/^"|"$/g, '');
+      sendMessage(question);
+    });
+  });
+})();
+</script>
+<!-- Footer -->
+<footer class="w-full py-xl mt-xl border-t border-outline-variant/20 flex flex-col items-center gap-md px-gutter text-center">
+<span class="text-label-md font-label-md font-black">TradePilot</span>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-lg">
+            © 2024 TradePilot. Empowering effortless mastery through AI intelligence.
+        </p>
+<div class="flex flex-wrap justify-center gap-md">
+<a class="text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all" href="#">Glossary</a>
+<a class="text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all" href="#">Research Methodology</a>
+<a class="text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all" href="#">Community Guidelines</a>
+<a class="text-label-sm text-on-surface-variant hover:text-primary hover:underline transition-all" href="#">Privacy Policy</a>
+</div>
+</footer>
+</main>
+<!-- Micro-interaction Scripts -->
+<script>
+    // Smooth scaling for buttons
+    document.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('mousedown', () => {
+            btn.style.transform = 'scale(0.96)';
+        });
+        btn.addEventListener('mouseup', () => {
+            btn.style.transform = 'scale(1)';
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = 'scale(1)';
+        });
+    });
+
+    // Simple search focus effect
+    const searchInput = document.querySelector('input[type="text"]');
+    if(searchInput) {
+        searchInput.addEventListener('focus', () => {
+            searchInput.parentElement.classList.add('w-80');
+            searchInput.parentElement.classList.remove('w-64');
+        });
+        searchInput.addEventListener('blur', () => {
+            searchInput.parentElement.classList.add('w-64');
+            searchInput.parentElement.classList.remove('w-80');
+        });
+    }
+</script>
+<script src="assets/auth-guard.js"></script>
+<script src="assets/explore-search.js"></script>
+<script src="assets/mentor-chat.js"></script>
+</body></html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Settings | TradePilot</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#574425",
+                    "background": "#fcf8fa",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#fcf8fa",
+                    "on-secondary-container": "#586377",
+                    "on-primary-fixed": "#131b2e",
+                    "tertiary-container": "#271901",
+                    "primary-fixed-dim": "#bec6e0",
+                    "surface-variant": "#e4e2e4",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#f0edef",
+                    "on-surface": "#1b1b1d",
+                    "on-tertiary": "#ffffff",
+                    "outline": "#76777d",
+                    "on-primary-container": "#7c839b",
+                    "inverse-on-surface": "#f3f0f2",
+                    "on-tertiary-fixed": "#271901",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#111c2d",
+                    "surface-container-low": "#f6f3f5",
+                    "secondary": "#545f73",
+                    "on-tertiary-container": "#98805d",
+                    "error": "#ba1a1a",
+                    "surface-container-highest": "#e4e2e4",
+                    "surface-tint": "#565e74",
+                    "on-background": "#1b1b1d",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#dcd9db",
+                    "error-container": "#ffdad6",
+                    "primary-fixed": "#dae2fd",
+                    "surface": "#fcf8fa",
+                    "inverse-surface": "#303032",
+                    "tertiary-fixed": "#fcdeb5",
+                    "outline-variant": "#c6c6cd",
+                    "inverse-primary": "#bec6e0",
+                    "primary-container": "#131b2e",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "on-error": "#ffffff",
+                    "tertiary": "#000000",
+                    "secondary-fixed": "#d8e3fb",
+                    "surface-container-high": "#eae7e9",
+                    "on-surface-variant": "#45464d",
+                    "primary": "#000000",
+                    "secondary-container": "#d5e0f8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1280px",
+                    "xs": "8px",
+                    "base": "4px",
+                    "sm": "16px",
+                    "md": "24px",
+                    "lg": "40px",
+                    "xl": "64px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "title-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "title-md": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .premium-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .premium-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+        .ai-gradient-border {
+            border-left: 2px solid;
+            border-image: linear-gradient(to bottom, #0F172A, #d8e3fb) 1;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+        .bento-item {
+            border: 1px solid #E2E8F0;
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body data-auth="required" class="bg-background text-on-surface font-body-md min-h-screen">
+<nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
+<a href="home.html" class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</a>
+<a href="dashboard.html" class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">arrow_back</span> Back to Dashboard
+</a>
+</div>
+</nav>
+
+<main class="min-h-screen flex justify-center px-gutter pt-24 pb-xl">
+<div class="w-full max-w-2xl space-y-lg">
+<h1 class="text-headline-lg font-headline-lg text-on-surface">Settings</h1>
+
+<!-- Profile -->
+<div class="bg-white border border-outline-variant/20 rounded-xl shadow-sm p-lg">
+<h2 class="text-title-md font-title-md mb-md">Profile</h2>
+<div id="profile-error" class="hidden bg-error-container text-on-error-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md"></div>
+<div id="profile-success" class="hidden bg-secondary-container text-on-secondary-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md"></div>
+<div class="flex flex-col gap-md">
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="settings-name">Full name</label>
+<input id="settings-name" type="text" class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs">Email</label>
+<input id="settings-email" type="email" disabled class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md bg-surface-container-low text-on-surface-variant"/>
+<p class="text-label-sm text-on-surface-variant mt-1">Email address can't be changed in this demo.</p>
+</div>
+<button id="save-profile-btn" class="self-start px-6 py-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md font-bold hover:opacity-90 transition-all">
+Save Changes
+</button>
+</div>
+</div>
+
+<!-- Password -->
+<div class="bg-white border border-outline-variant/20 rounded-xl shadow-sm p-lg">
+<h2 class="text-title-md font-title-md mb-md">Change Password</h2>
+<div id="password-error" class="hidden bg-error-container text-on-error-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md"></div>
+<div id="password-success" class="hidden bg-secondary-container text-on-secondary-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md"></div>
+<div class="flex flex-col gap-md">
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="current-password">Current password</label>
+<input id="current-password" type="password" class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="new-password">New password</label>
+<input id="new-password" type="password" class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none" placeholder="At least 8 characters, with a letter and a number"/>
+</div>
+<button id="save-password-btn" class="self-start px-6 py-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md font-bold hover:opacity-90 transition-all">
+Update Password
+</button>
+</div>
+</div>
+
+<!-- Appearance -->
+<div class="bg-white border border-outline-variant/20 rounded-xl shadow-sm p-lg">
+<h2 class="text-title-md font-title-md mb-md">Appearance</h2>
+<div class="flex items-center justify-between">
+<div>
+<p class="text-body-md font-body-md text-on-surface">Dark mode</p>
+<p class="text-label-sm text-on-surface-variant">Applies to pages that support dark mode.</p>
+</div>
+<button id="dark-mode-toggle" class="relative w-14 h-8 rounded-full bg-outline-variant/40 transition-colors" aria-label="Toggle dark mode">
+<span id="dark-mode-knob" class="absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow transition-transform"></span>
+</button>
+</div>
+</div>
+
+<!-- Account -->
+<div class="bg-white border border-outline-variant/20 rounded-xl shadow-sm p-lg">
+<h2 class="text-title-md font-title-md mb-md">Account</h2>
+<button id="settings-logout-btn" class="px-6 py-3 border border-error text-error rounded-xl font-label-md text-label-md font-bold hover:bg-error hover:text-white transition-all">
+Log Out
+</button>
+</div>
+</div>
+</main>
+
+<script src="assets/auth-guard.js"></script>
+<script>
+(function () {
+  const API_BASE = '/api/auth';
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const nameInput = document.getElementById('settings-name');
+    const emailInput = document.getElementById('settings-email');
+    const profileError = document.getElementById('profile-error');
+    const profileSuccess = document.getElementById('profile-success');
+    const saveProfileBtn = document.getElementById('save-profile-btn');
+
+    const currentPasswordInput = document.getElementById('current-password');
+    const newPasswordInput = document.getElementById('new-password');
+    const passwordError = document.getElementById('password-error');
+    const passwordSuccess = document.getElementById('password-success');
+    const savePasswordBtn = document.getElementById('save-password-btn');
+
+    const darkModeToggle = document.getElementById('dark-mode-toggle');
+    const darkModeKnob = document.getElementById('dark-mode-knob');
+    const logoutBtn = document.getElementById('settings-logout-btn');
+
+    function authHeaders(extra) {
+      const h = window.TradePilotAuth ? window.TradePilotAuth.authHeader() : {};
+      return { ...h, ...(extra || {}) };
+    }
+
+    // Pre-fill current user info
+    const user = window.TradePilotAuth ? window.TradePilotAuth.getUser() : null;
+    if (user) {
+      nameInput.value = user.name || '';
+      emailInput.value = user.email || '';
+    }
+
+    saveProfileBtn.addEventListener('click', async () => {
+      profileError.classList.add('hidden');
+      profileSuccess.classList.add('hidden');
+      saveProfileBtn.disabled = true;
+      saveProfileBtn.textContent = 'Saving...';
+
+      try {
+        const res = await fetch(`${API_BASE}/profile`, {
+          method: 'PATCH',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ name: nameInput.value })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          profileError.textContent = data.error || 'Could not save changes.';
+          profileError.classList.remove('hidden');
+          return;
+        }
+
+        localStorage.setItem('tradepilot_token', data.token);
+        localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
+        profileSuccess.textContent = 'Saved!';
+        profileSuccess.classList.remove('hidden');
+      } catch (err) {
+        profileError.textContent = 'Could not reach the server. Make sure it is running (npm start).';
+        profileError.classList.remove('hidden');
+      } finally {
+        saveProfileBtn.disabled = false;
+        saveProfileBtn.textContent = 'Save Changes';
+      }
+    });
+
+    savePasswordBtn.addEventListener('click', async () => {
+      passwordError.classList.add('hidden');
+      passwordSuccess.classList.add('hidden');
+      savePasswordBtn.disabled = true;
+      savePasswordBtn.textContent = 'Updating...';
+
+      try {
+        const res = await fetch(`${API_BASE}/change-password`, {
+          method: 'POST',
+          headers: authHeaders({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({
+            currentPassword: currentPasswordInput.value,
+            newPassword: newPasswordInput.value
+          })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          passwordError.textContent = data.error || 'Could not update password.';
+          passwordError.classList.remove('hidden');
+          return;
+        }
+
+        currentPasswordInput.value = '';
+        newPasswordInput.value = '';
+        passwordSuccess.textContent = 'Password updated!';
+        passwordSuccess.classList.remove('hidden');
+      } catch (err) {
+        passwordError.textContent = 'Could not reach the server. Make sure it is running (npm start).';
+        passwordError.classList.remove('hidden');
+      } finally {
+        savePasswordBtn.disabled = false;
+        savePasswordBtn.textContent = 'Update Password';
+      }
+    });
+
+    // Dark mode toggle (persisted via localStorage, applied as a class on <html>)
+    function applyDarkMode(enabled) {
+      document.documentElement.classList.toggle('dark', enabled);
+      darkModeKnob.style.transform = enabled ? 'translateX(1.5rem)' : 'translateX(0)';
+      darkModeToggle.classList.toggle('bg-primary', enabled);
+      darkModeToggle.classList.toggle('bg-outline-variant/40', !enabled);
+    }
+    const darkModeEnabled = localStorage.getItem('tradepilot_dark_mode') === 'true';
+    applyDarkMode(darkModeEnabled);
+
+    darkModeToggle.addEventListener('click', () => {
+      const newState = localStorage.getItem('tradepilot_dark_mode') !== 'true';
+      localStorage.setItem('tradepilot_dark_mode', String(newState));
+      applyDarkMode(newState);
+    });
+
+    logoutBtn.addEventListener('click', () => {
+      if (confirm('Log out of TradePilot?')) {
+        window.TradePilotAuth.logout();
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>
