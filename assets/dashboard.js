@@ -78,7 +78,22 @@
       try {
         const res = await fetch(PORTFOLIO_URL, { headers: authHeaders() });
         const data = await res.json();
-        if (res.ok) renderHoldings(data.holdings, data.summary);
+        if (res.ok) {
+          renderHoldings(data.holdings, data.summary);
+          renderSectorExposure(data.sectorExposure);
+          
+          // Update stats
+          const totalHoldingsEl = document.getElementById('total-holdings-count');
+          const totalSectorsEl = document.getElementById('total-sectors-count');
+          const totalInvestedEl = document.getElementById('total-invested-capital');
+          
+          if (totalHoldingsEl) totalHoldingsEl.textContent = `${data.holdings.length} Position${data.holdings.length === 1 ? '' : 's'}`;
+          if (totalSectorsEl) totalSectorsEl.textContent = `${data.sectorExposure.length} Sector${data.sectorExposure.length === 1 ? '' : 's'}`;
+          if (totalInvestedEl) totalInvestedEl.textContent = fmtMoney(data.summary.totalCost);
+          
+          // Trigger news reload for portfolio
+          loadPortfolioNews();
+        }
       } catch (err) {
         console.error('Could not load holdings', err);
       }
@@ -176,6 +191,8 @@
             loadWatchlist();
           });
         });
+
+        loadWatchlistNews();
       } catch (err) {
         console.error('Could not load watchlist', err);
       }
@@ -345,6 +362,124 @@
           saveBtn.disabled = false;
           saveBtn.textContent = 'Save Changes';
         }
+      });
+    }
+
+    // --- Sector Exposure Render ---
+    function renderSectorExposure(exposure) {
+      const container = document.getElementById('sector-exposure-chart-container');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      if (!exposure || exposure.length === 0) {
+        container.innerHTML = `<p id="sector-empty-state" class="text-label-md text-on-surface-variant dark:text-outline-variant self-center text-center">Add holdings below to see your sector exposure breakdown.</p>`;
+        return;
+      }
+      
+      // Sort exposure descending by percentage
+      exposure.sort((a, b) => b.percentage - a.percentage);
+      
+      exposure.forEach((item, idx) => {
+        const bar = document.createElement('div');
+        const bgClass = idx === 0 ? 'bg-primary dark:bg-primary-fixed-dim' : 'bg-surface-container-high dark:bg-outline-variant';
+        const hoverClass = idx === 0 ? 'hover:opacity-85' : 'hover:bg-primary-container/20';
+        
+        bar.className = `flex-1 max-w-[64px] w-full ${bgClass} ${hoverClass} rounded-t-xl transition-all cursor-pointer group relative`;
+        const hPercent = Math.max(12, Math.round(item.percentage)); // ensure at least 12% for visual bar appearance
+        bar.style.height = `${hPercent}%`;
+        
+        bar.innerHTML = `
+          <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">${item.sector}: ${item.percentage}%</div>
+          <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-on-surface-variant dark:text-outline-variant truncate w-full text-center">${item.sector.slice(0, 10)}</div>
+        `;
+        container.appendChild(bar);
+      });
+    }
+
+    // --- Narrative Intelligence News ---
+    const portfolioNewsList = document.getElementById('portfolio-news-list');
+    const watchlistNewsList = document.getElementById('watchlist-news-list');
+    
+    function renderNews(listElement, newsItems, emptyText) {
+      if (!listElement) return;
+      listElement.innerHTML = '';
+      if (!newsItems || newsItems.length === 0) {
+        listElement.innerHTML = `<p class="col-span-12 text-label-sm text-on-surface-variant dark:text-outline-variant">${emptyText}</p>`;
+        return;
+      }
+      
+      newsItems.forEach(item => {
+        const card = document.createElement('a');
+        card.href = `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`;
+        card.target = '_blank';
+        card.className = 'glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all bg-white dark:bg-surface-container border border-outline-variant/30 rounded-xl';
+        
+        card.innerHTML = `
+          <div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center font-bold text-primary dark:text-primary-fixed-dim shrink-0">
+            ${item.symbol}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex gap-2 mb-1 items-center">
+               <span class="bg-primary/10 text-primary dark:text-primary-fixed-dim text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">${item.symbol}</span>
+               <span class="text-[10px] text-on-surface-variant dark:text-outline-variant">${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            </div>
+            <h4 class="text-label-sm font-bold group-hover:text-primary dark:group-hover:text-primary-fixed-dim transition-colors truncate dark:text-inverse-on-surface">${item.title}</h4>
+            <p class="text-[11px] text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-0.5">${item.description}</p>
+          </div>
+        `;
+        listElement.appendChild(card);
+      });
+    }
+
+    async function loadPortfolioNews() {
+      if (!portfolioNewsList) return;
+      try {
+        const res = await fetch('/api/portfolio/news', { headers: authHeaders() });
+        const data = await res.json();
+        if (res.ok) {
+          renderNews(portfolioNewsList, data.news, 'Add holdings below to see news linked to your portfolio.');
+        }
+      } catch (err) {
+        console.error('Could not load portfolio news', err);
+      }
+    }
+
+    async function loadWatchlistNews() {
+      if (!watchlistNewsList) return;
+      try {
+        const res = await fetch('/api/watchlist/news', { headers: authHeaders() });
+        const data = await res.json();
+        if (res.ok) {
+          renderNews(watchlistNewsList, data.news, 'Add symbols to your watchlist to see watchlist news.');
+        }
+      } catch (err) {
+        console.error('Could not load watchlist news', err);
+      }
+    }
+
+    // Tab interaction
+    const tabPortfolioBtn = document.getElementById('tab-portfolio-news');
+    const tabWatchlistBtn = document.getElementById('tab-watchlist-news');
+
+    if (tabPortfolioBtn && tabWatchlistBtn) {
+      tabPortfolioBtn.addEventListener('click', () => {
+        // Toggle tab styles
+        tabPortfolioBtn.className = 'px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
+        tabWatchlistBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
+        
+        // Show/hide lists
+        portfolioNewsList.classList.remove('hidden');
+        watchlistNewsList.classList.add('hidden');
+      });
+
+      tabWatchlistBtn.addEventListener('click', () => {
+        // Toggle tab styles
+        tabWatchlistBtn.className = 'px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
+        tabPortfolioBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
+        
+        // Show/hide lists
+        watchlistNewsList.classList.remove('hidden');
+        portfolioNewsList.classList.add('hidden');
       });
     }
 

@@ -426,5 +426,29 @@ module.exports = {
         [userId]
     );
     return rows[0];
-}
+  },
+
+  async getNewsForSymbols(table, symbols) {
+    if (!symbols || symbols.length === 0) return [];
+    const tableName = table === 'portfolio' ? 'portfolio_news' : 'watchlist_news';
+    const { rows } = await pool.query(
+      `SELECT id, symbol, title, description, url, created_at AS "createdAt"
+       FROM ${tableName}
+       WHERE symbol = ANY($1)
+       ORDER BY created_at DESC LIMIT 20`,
+      [symbols]
+    );
+    return rows;
+  },
+
+  async saveNewsItem(table, { symbol, title, description, url }) {
+    const tableName = table === 'portfolio' ? 'portfolio_news' : 'watchlist_news';
+    const { rows } = await pool.query(
+      `INSERT INTO ${tableName} (symbol, title, description, url)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, symbol, title, description, url, created_at AS "createdAt"`,
+      [symbol, title, description, url]
+    );
+    return rows[0];
+  }
 };
