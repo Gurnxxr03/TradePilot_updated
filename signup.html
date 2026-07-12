@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Sign Up | TradePilot</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+  window.onGoogleLibraryLoad = function() {
+    if (window.initGoogleAuth) window.initGoogleAuth();
+  };
+</script>
+<script src="https://accounts.google.com/gsi/client?onload=onGoogleLibraryLoad" async defer></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#574425",
+                    "background": "#fcf8fa",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#fcf8fa",
+                    "on-secondary-container": "#586377",
+                    "on-primary-fixed": "#131b2e",
+                    "tertiary-container": "#271901",
+                    "primary-fixed-dim": "#bec6e0",
+                    "surface-variant": "#e4e2e4",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "on-error-container": "#93000a",
+                    "surface-container": "#f0edef",
+                    "on-surface": "#1b1b1d",
+                    "on-tertiary": "#ffffff",
+                    "outline": "#76777d",
+                    "on-primary-container": "#7c839b",
+                    "inverse-on-surface": "#f3f0f2",
+                    "on-tertiary-fixed": "#271901",
+                    "on-primary": "#ffffff",
+                    "on-secondary-fixed": "#111c2d",
+                    "surface-container-low": "#f6f3f5",
+                    "secondary": "#545f73",
+                    "on-tertiary-container": "#98805d",
+                    "error": "#ba1a1a",
+                    "surface-container-highest": "#e4e2e4",
+                    "surface-tint": "#565e74",
+                    "on-background": "#1b1b1d",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "on-secondary": "#ffffff",
+                    "surface-dim": "#dcd9db",
+                    "error-container": "#ffdad6",
+                    "primary-fixed": "#dae2fd",
+                    "surface": "#fcf8fa",
+                    "inverse-surface": "#303032",
+                    "tertiary-fixed": "#fcdeb5",
+                    "outline-variant": "#c6c6cd",
+                    "inverse-primary": "#bec6e0",
+                    "primary-container": "#131b2e",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "on-error": "#ffffff",
+                    "tertiary": "#000000",
+                    "secondary-fixed": "#d8e3fb",
+                    "surface-container-high": "#eae7e9",
+                    "on-surface-variant": "#45464d",
+                    "primary": "#000000",
+                    "secondary-container": "#d5e0f8"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1280px",
+                    "xs": "8px",
+                    "base": "4px",
+                    "sm": "16px",
+                    "md": "24px",
+                    "lg": "40px",
+                    "xl": "64px",
+                    "gutter": "24px"
+            },
+            "fontFamily": {
+                    "display-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "label-md": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "title-md": ["Inter"],
+                    "label-sm": ["Inter"],
+                    "headline-lg-mobile": ["Inter"]
+            },
+            "fontSize": {
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "title-md": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "600"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .premium-card {
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .premium-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+        }
+        .ai-gradient-border {
+            border-left: 2px solid;
+            border-image: linear-gradient(to bottom, #0F172A, #d8e3fb) 1;
+        }
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 24px;
+        }
+        .bento-item {
+            border: 1px solid #E2E8F0;
+            background: #FFFFFF;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen">
+<nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
+<a href="home.html" class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</a>
+<a href="signin.html" class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">Already have an account? <span class="text-primary font-bold">Sign In</span></a>
+</div>
+</nav>
+
+<main class="min-h-screen flex items-center justify-center px-gutter pt-16">
+<div class="w-full max-w-md bg-white border border-outline-variant/20 rounded-xl shadow-xl p-xl my-xl">
+<div class="text-center mb-lg">
+<h1 class="text-headline-lg font-headline-lg text-primary mb-xs">Create your account</h1>
+<p class="text-body-md font-body-md text-on-surface-variant">Start mastering the market with your AI Mentor.</p>
+</div>
+
+<div id="signup-error" class="hidden bg-error-container text-on-error-container text-label-md font-label-md rounded-xl px-4 py-3 mb-md"></div>
+
+<form id="signup-form" class="flex flex-col gap-md">
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="name">Full name</label>
+<input id="name" name="name" type="text" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Jordan Lee"/>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="email">Email</label>
+<input id="email" name="email" type="email" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none" placeholder="you@example.com"/>
+<p id="email-hint" class="text-label-sm mt-1 hidden"></p>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="password">Password</label>
+<input id="password" name="password" type="password" required minlength="8" class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none" placeholder="At least 8 characters, with a letter and a number"/>
+<p id="password-hint" class="text-label-sm mt-1 text-on-surface-variant">Must be 8+ characters, with at least one letter and one number.</p>
+</div>
+<div>
+<label class="block text-label-md font-label-md text-on-surface-variant mb-xs" for="confirm-password">Confirm password</label>
+<input id="confirm-password" name="confirm-password" type="password" required class="w-full border border-outline-variant/40 rounded-xl px-4 py-3 text-body-md focus:ring-2 focus:ring-primary focus:outline-none" placeholder="Re-enter your password"/>
+<p id="confirm-hint" class="text-label-sm mt-1 hidden"></p>
+</div>
+<button id="signup-submit" type="submit" class="w-full mt-sm py-3 bg-primary text-on-primary rounded-xl font-label-md text-label-md font-bold hover:opacity-90 transition-all active:scale-95">
+Create Account
+</button>
+</form>
+
+<div class="flex items-center my-md">
+  <div class="flex-grow h-px bg-outline-variant/30"></div>
+  <span class="px-3 text-label-sm text-on-surface-variant font-medium">or</span>
+  <div class="flex-grow h-px bg-outline-variant/30"></div>
+</div>
+
+<div id="google-btn-container" class="w-full flex justify-center"></div>
+
+<button id="mock-google-btn" class="hidden w-full flex items-center justify-center gap-sm py-3 border border-outline-variant/30 rounded-xl font-label-md text-label-md text-on-surface hover:bg-surface-container-low transition-all active:scale-95 mt-2">
+  <svg class="w-5 h-5 animate-pulse" viewBox="0 0 24 24">
+    <path fill="#EA4335" d="M12 5.04c1.66 0 3.2.57 4.38 1.69l3.27-3.27C17.67 1.54 14.98 1 12 1 7.35 1 3.37 3.65 1.42 7.55l3.87 3C6.24 7.62 8.87 5.04 12 5.04z"/>
+    <path fill="#4285F4" d="M23.49 12.27c0-.81-.07-1.59-.2-2.36H12v4.51h6.46c-.29 1.48-1.14 2.73-2.4 3.58l3.73 2.89c2.18-2.01 3.7-4.97 3.7-8.62z"/>
+    <path fill="#FBBC05" d="M5.29 10.55c-.25-.75-.39-1.55-.39-2.37s.14-1.62.39-2.37L1.42 2.81C.52 4.61 0 6.62 0 8.75s.52 4.14 1.42 5.94l3.87-3.14z"/>
+    <path fill="#34A853" d="M12 18.96c-3.13 0-5.76-2.58-6.71-5.51l-3.87 3.14c1.95 3.9 5.93 6.55 10.58 6.55 3.01 0 5.75-1 7.74-2.73l-3.73-2.89c-1.1.75-2.52 1.2-4.01 1.2z"/>
+  </svg>
+  <span>Continue with Google</span>
+</button>
+</div>
+<p class="text-label-sm text-on-surface-variant text-center mt-lg">
+By signing up, you agree this is a local demo app — no real trading occurs.
+</p>
+</div>
+</main>
+
+<script>
+(function () {
+  const form = document.getElementById('signup-form');
+  const errorBox = document.getElementById('signup-error');
+  const submitBtn = document.getElementById('signup-submit');
+
+  const emailInput = document.getElementById('email');
+  const emailHint = document.getElementById('email-hint');
+  const passwordInput = document.getElementById('password');
+  const confirmInput = document.getElementById('confirm-password');
+  const confirmHint = document.getElementById('confirm-hint');
+
+  function isValidEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  }
+
+  function passwordIssue(value) {
+    if (!value || value.length < 8) return 'Must be at least 8 characters.';
+    if (!/[A-Za-z]/.test(value) || !/[0-9]/.test(value)) return 'Must include a letter and a number.';
+    return null;
+  }
+
+  function showHint(el, message, isError) {
+    if (!message) {
+      el.classList.add('hidden');
+      return;
+    }
+    el.textContent = message;
+    el.classList.remove('hidden');
+    el.classList.toggle('text-error', !!isError);
+    el.classList.toggle('text-on-surface-variant', !isError);
+  }
+
+  emailInput.addEventListener('input', () => {
+    if (!emailInput.value) return showHint(emailHint, null);
+    showHint(emailHint, isValidEmail(emailInput.value) ? null : 'Please enter a valid email address.', true);
+  });
+
+  passwordInput.addEventListener('input', () => {
+    const issue = passwordIssue(passwordInput.value);
+    showHint(document.getElementById('password-hint'), issue || 'Looks good.', !!issue);
+    if (confirmInput.value) confirmInput.dispatchEvent(new Event('input'));
+  });
+
+  confirmInput.addEventListener('input', () => {
+    if (!confirmInput.value) return showHint(confirmHint, null);
+    showHint(confirmHint, confirmInput.value === passwordInput.value ? null : 'Passwords do not match.', true);
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorBox.classList.add('hidden');
+
+    const name = document.getElementById('name').value;
+    const email = emailInput.value;
+    const password = passwordInput.value;
+    const confirmPassword = confirmInput.value;
+
+    if (!isValidEmail(email)) {
+      errorBox.textContent = 'Please enter a valid email address.';
+      errorBox.classList.remove('hidden');
+      return;
+    }
+    const pwIssue = passwordIssue(password);
+    if (pwIssue) {
+      errorBox.textContent = pwIssue;
+      errorBox.classList.remove('hidden');
+      return;
+    }
+    if (password !== confirmPassword) {
+      errorBox.textContent = 'Passwords do not match.';
+      errorBox.classList.remove('hidden');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account...';
+
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        errorBox.textContent = data.error || 'Something went wrong.';
+        errorBox.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Create Account';
+        return;
+      }
+
+      localStorage.setItem('tradepilot_token', data.token);
+      localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      errorBox.textContent = 'Could not reach the server. Make sure it is running (npm start).';
+      errorBox.classList.remove('hidden');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+    }
+  });
+
+  // Handle Google Credential Response
+  window.handleCredentialResponse = async function(response) {
+    errorBox.classList.add('hidden');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Creating account...';
+    
+    try {
+      const res = await fetch('/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ credential: response.credential })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || 'Google signup failed.');
+      }
+      
+      localStorage.setItem('tradepilot_token', data.token);
+      localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
+      window.location.href = 'dashboard.html';
+    } catch (err) {
+      errorBox.textContent = err.message || 'Could not sign up with Google.';
+      errorBox.classList.remove('hidden');
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Create Account';
+    }
+  };
+
+  // Check and setup Google OAuth
+  async function initGoogleAuth() {
+    try {
+      const res = await fetch('/api/auth/google/client-id');
+      const data = await res.json();
+      
+      if (data.clientId) {
+        google.accounts.id.initialize({
+          client_id: data.clientId,
+          callback: window.handleCredentialResponse
+        });
+        google.accounts.id.renderButton(
+          document.getElementById('google-btn-container'),
+          { theme: 'outline', size: 'large', width: 384, text: 'signup_with' }
+        );
+        google.accounts.id.prompt();
+      } else {
+        showMockGoogleBtn();
+      }
+    } catch (err) {
+      console.warn('Google Client ID check failed, showing simulated signup:', err);
+      showMockGoogleBtn();
+    }
+  }
+
+  function showMockGoogleBtn() {
+    const mockBtn = document.getElementById('mock-google-btn');
+    if (mockBtn) {
+      mockBtn.classList.remove('hidden');
+      mockBtn.addEventListener('click', async () => {
+        const mockEmail = prompt("Enter simulated Google account email (default: google-tester@example.com):", "google-tester@example.com");
+        if (mockEmail === null) return;
+        
+        errorBox.classList.add('hidden');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creating account...';
+        
+        try {
+          const res = await fetch('/api/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isMock: true, email: mockEmail })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Simulated Google signin failed.');
+          }
+          localStorage.setItem('tradepilot_token', data.token);
+          localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
+          window.location.href = 'dashboard.html';
+        } catch (err) {
+          errorBox.textContent = err.message || 'Could not complete simulated Google signin.';
+          errorBox.classList.remove('hidden');
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Create Account';
+        }
+      });
+    }
+  }
+
+  // Run on load
+  window.initGoogleAuth = initGoogleAuth;
+  if (window.google && window.google.accounts) {
+    initGoogleAuth();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Learn | TradePilot</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-dim": "#dcd9db",
+                    "on-surface": "#1b1b1d",
+                    "surface-variant": "#e4e2e4",
+                    "on-tertiary-container": "#98805d",
+                    "surface-container-highest": "#e4e2e4",
+                    "inverse-on-surface": "#f3f0f2",
+                    "surface-tint": "#565e74",
+                    "background": "#fcf8fa",
+                    "tertiary-fixed": "#fcdeb5",
+                    "surface": "#fcf8fa",
+                    "on-primary-container": "#7c839b",
+                    "on-secondary-fixed-variant": "#3c475a",
+                    "surface-container-lowest": "#ffffff",
+                    "outline": "#76777d",
+                    "secondary": "#545f73",
+                    "surface-container-low": "#f6f3f5",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed-dim": "#bcc7de",
+                    "secondary-fixed": "#d8e3fb",
+                    "on-background": "#1b1b1d",
+                    "on-tertiary-fixed": "#271901",
+                    "on-tertiary-fixed-variant": "#574425",
+                    "on-primary-fixed-variant": "#3f465c",
+                    "on-surface-variant": "#45464d",
+                    "tertiary-container": "#271901",
+                    "primary-container": "#131b2e",
+                    "tertiary-fixed-dim": "#dec29a",
+                    "primary-fixed-dim": "#bec6e0",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-secondary": "#ffffff",
+                    "surface-container-high": "#eae7e9",
+                    "surface-container": "#f0edef",
+                    "on-primary-fixed": "#131b2e",
+                    "on-secondary-container": "#586377",
+                    "secondary-container": "#d5e0f8",
+                    "primary": "#000000",
+                    "surface-bright": "#fcf8fa",
+                    "tertiary": "#000000",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "on-secondary-fixed": "#111c2d",
+                    "inverse-primary": "#bec6e0",
+                    "on-error": "#ffffff",
+                    "outline-variant": "#c6c6cd",
+                    "primary-fixed": "#dae2fd",
+                    "inverse-surface": "#303032"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "20px": "20px",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "container-max": "1280px",
+                    "gutter": "24px",
+                    "sm": "16px",
+                    "md": "24px",
+                    "base": "4px",
+                    "xs": "8px",
+                    "lg": "40px",
+                    "xl": "64px"
+            },
+            "fontFamily": {
+                    "headline-lg-mobile": ["Inter"],
+                    "body-md": ["Inter"],
+                    "title-md": ["Inter"],
+                    "label-md": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "body-lg": ["Inter"],
+                    "display-lg": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg-mobile": ["24px", {"lineHeight": "1.2", "fontWeight": "600"}],
+                    "body-md": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "title-md": ["20px", {"lineHeight": "1.4", "fontWeight": "600"}],
+                    "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.01em", "fontWeight": "500"}],
+                    "headline-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "label-sm": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.03em", "fontWeight": "600"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        background-color: #f8fafc;
+        font-family: 'Inter', sans-serif;
+        color: #1b1b1d;
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        vertical-align: middle;
+      }
+      .glass {
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+      }
+      .primary-gradient {
+        background: linear-gradient(135deg, #0F172A 0%, #334155 100%);
+      }
+      .card-shadow {
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #e2e8f0;
+        border-radius: 10px;
+      }
+    </style>
+</head>
+<body data-auth="required" class="bg-background overflow-x-hidden">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full bg-white/70 backdrop-blur-md z-50 border-b border-outline-variant/30 shadow-sm">
+<div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
+<div class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</div>
+<div class="hidden md:flex gap-md items-center">
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="today.html">Today's Narrative</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="explore.html">Explore</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="alerts.html">Smart Alerts</a>
+<a class="text-primary border-b-2 border-primary pb-1 text-label-md font-label-md" href="learn.html">Learn</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors text-label-md font-label-md" href="dashboard.html">Dashboard</a>
+</div>
+<div class="flex items-center gap-sm">
+<div class="relative hidden sm:block">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-1.5 bg-surface-container-low border border-outline-variant rounded-full text-label-md focus:ring-2 focus:ring-primary/20 outline-none w-64" placeholder="Search lessons..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface p-2 hover:bg-surface-container-low rounded-full transition-all" id="darkModeToggle">dark_mode</button>
+<a id="nav-account-btn" href="signin.html" class="material-symbols-outlined material-symbols-outlined text-on-surface p-2 hover:bg-surface-container-low rounded-full transition-all cursor-pointer">account_circle</a>
+</div>
+</div>
+</nav>
+<!-- SideNavBar (AI Mentor) -->
+<aside class="fixed right-0 top-16 h-[calc(100vh-64px)] w-80 bg-surface border-l border-outline-variant/30 shadow-xl z-40 hidden xl:flex flex-col p-sm">
+<div class="p-md bg-primary-container rounded-20px text-white mb-md">
+<div class="flex items-center gap-3 mb-xs">
+<div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">psychology</span>
+</div>
+<div>
+<h3 class="font-headline-sm text-headline-sm">AI Mentor</h3>
+<p class="text-label-sm opacity-80">Ask me anything about the markets</p>
+</div>
+</div>
+<button class="w-full py-2 mt-2 bg-white text-primary font-bold rounded-lg text-label-md hover:bg-opacity-90 transition-all">Explain Like I'm 18</button>
+</div>
+<nav class="flex-grow">
+<a class="bg-primary-container text-on-primary-container rounded-20px mx-2 my-1 px-4 py-3 flex items-center gap-3 active:scale-95 transition-transform" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="text-label-md font-label-md">AI Mentor</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20px mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">school</span>
+<span class="text-label-md font-label-md">Knowledge Hub</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20px mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">insights</span>
+<span class="text-label-md font-label-md">Market Mood</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20px mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">ads_click</span>
+<span class="text-label-md font-label-md">Daily Goals</span>
+</a>
+<!-- Learner Quick Actions (Simplified Sidebar Version) -->
+<div class="mt-lg px-2">
+<h4 class="text-label-sm uppercase tracking-widest text-on-surface-variant/60 mb-sm px-2">Quick Actions</h4>
+<div class="space-y-base">
+<button class="w-full flex items-center justify-between p-3 rounded-xl bg-white border border-outline-variant hover:border-primary transition-all group">
+<span class="text-label-md font-medium">Understand Hedging</span>
+<span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+<button class="w-full flex items-center justify-between p-3 rounded-xl bg-white border border-outline-variant hover:border-primary transition-all group">
+<span class="text-label-md font-medium">Spotting Alpha</span>
+<span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+</div>
+</div>
+</nav>
+<div class="flex-1 flex flex-col min-h-0 mt-md px-2">
+<p class="text-label-sm font-bold text-on-surface-variant uppercase tracking-wider mb-xs">Chat</p>
+<div id="global-ai-chat-log" class="flex-1 overflow-y-auto space-y-2 mb-sm"></div>
+<div class="relative">
+<input id="global-ai-chat-input" class="w-full bg-white border border-outline-variant/30 rounded-xl pr-10 text-xs py-3 px-3 focus:ring-primary focus:outline-none" placeholder="Ask AI Mentor..." type="text"/>
+<button id="global-ai-chat-send" class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-primary">arrow_forward</button>
+</div>
+</div>
+<div class="border-t border-outline-variant/20 pt-sm mt-auto">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20px mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="settings.html">
+<span class="material-symbols-outlined">settings</span>
+<span class="text-label-md font-label-md">Settings</span>
+</a>
+<a class="text-on-surface-variant hover:bg-surface-variant/50 rounded-20px mx-2 my-1 px-4 py-3 flex items-center gap-3 transition-colors" href="#">
+<span class="material-symbols-outlined">help</span>
+<span class="text-label-md font-label-md">Help</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="pt-24 pb-xl px-4 md:px-gutter max-w-container-max mx-auto xl:mr-80">
+<!-- Welcome & Streak Tracker -->
+<section class="mb-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-md">
+<div>
+<h1 class="font-headline-lg text-headline-lg md:text-display-lg tracking-tight mb-xs">Level Up Your Strategy.</h1>
+<p class="text-body-lg text-on-surface-variant max-w-2xl">Master the markets through AI-guided structured learning. From first trade to advanced derivatives.</p>
+</div>
+<div class="bg-white border border-outline-variant p-md rounded-20px card-shadow flex items-center gap-md min-w-[240px]">
+<div class="flex flex-col">
+<span class="text-label-sm text-on-surface-variant uppercase tracking-widest">Daily Streak</span>
+<div class="flex items-center gap-xs">
+<span class="material-symbols-outlined text-orange-500" style="font-variation-settings: 'FILL' 1;">local_fire_department</span>
+<span class="font-headline-lg text-headline-lg">12 Days</span>
+</div>
+</div>
+<div class="h-12 w-px bg-outline-variant/30"></div>
+<div class="flex flex-col">
+<span class="text-label-sm text-on-surface-variant uppercase tracking-widest">Today's Goal</span>
+<span class="font-title-md text-title-md">2/3 Lessons</span>
+</div>
+</div>
+</section>
+<!-- Recommended Learning & Knowledge Pulse -->
+<section class="grid grid-cols-1 lg:grid-cols-3 gap-md mb-lg">
+<div class="lg:col-span-2 bg-primary-container/5 border-l-4 border-primary p-md rounded-r-20px flex flex-col md:flex-row items-center gap-md">
+<div class="flex-shrink-0 w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">auto_awesome</span>
+</div>
+<div class="flex-grow">
+<h3 class="font-title-md text-title-md text-primary mb-1">What can I learn from today's market?</h3>
+<p class="text-body-md text-on-surface-variant">The S&amp;P 500 is showing a 'Double Top' pattern. Want to learn how to spot trend reversals?</p>
+</div>
+<button class="bg-primary text-white px-6 py-3 rounded-xl font-bold hover:shadow-lg transition-all whitespace-nowrap">Start AI Lesson</button>
+</div>
+<!-- Knowledge Pulse Teaser Card -->
+<div class="bg-white border border-outline-variant rounded-20px p-md card-shadow flex items-center gap-md relative overflow-hidden group cursor-pointer hover:border-primary transition-all">
+<div class="absolute -right-4 -top-4 w-20 h-20 bg-primary/5 rounded-full blur-xl group-hover:scale-150 transition-transform"></div>
+<div class="w-12 h-12 rounded-xl bg-surface-container-low flex items-center justify-center text-primary relative z-10">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">bolt</span>
+</div>
+<div class="relative z-10">
+<h4 class="font-title-md text-label-md font-bold mb-0.5">Knowledge Pulse</h4>
+<p class="text-label-sm text-on-surface-variant">Market sentiment shifted 4% since open. See why.</p>
+</div>
+<span class="material-symbols-outlined ml-auto text-primary opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+</div>
+</section>
+<!-- Learning Paths (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-md mb-xl">
+<!-- Beginner -->
+<div class="group relative bg-white border border-outline-variant rounded-20px p-lg card-shadow overflow-hidden hover:border-primary transition-all duration-300">
+<div class="relative z-10">
+<div class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-label-sm w-fit mb-md">Lvl 1 • Beginner</div>
+<h2 class="font-headline-lg text-headline-lg mb-sm">The Foundation</h2>
+<p class="text-on-surface-variant mb-lg">Master the vocabulary, brokers, and basic mechanics of the stock market.</p>
+<div class="flex items-center gap-xs mb-md">
+<div class="h-1.5 flex-grow bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-blue-500 w-[65%]"></div>
+</div>
+<span class="text-label-sm font-bold text-blue-600">65%</span>
+</div>
+<button class="flex items-center gap-2 font-bold text-primary hover:gap-3 transition-all">Resume Path <span class="material-symbols-outlined">arrow_forward</span></button>
+</div>
+<div class="absolute -right-12 -bottom-12 opacity-5 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[200px]">child_care</span>
+</div>
+</div>
+<!-- Intermediate -->
+<div class="group relative bg-white border border-outline-variant rounded-20px p-lg card-shadow overflow-hidden hover:border-primary transition-all duration-300">
+<div class="relative z-10">
+<div class="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-label-sm w-fit mb-md">Lvl 2 • Intermediate</div>
+<h2 class="font-headline-lg text-headline-lg mb-sm">Technical Edge</h2>
+<p class="text-on-surface-variant mb-lg">Indicators, chart patterns, and fundamental valuation techniques.</p>
+<div class="flex items-center gap-xs mb-md">
+<div class="h-1.5 flex-grow bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-emerald-500 w-[20%]"></div>
+</div>
+<span class="text-label-sm font-bold text-emerald-600">20%</span>
+</div>
+<button class="flex items-center gap-2 font-bold text-primary hover:gap-3 transition-all">Start Path <span class="material-symbols-outlined">arrow_forward</span></button>
+</div>
+<div class="absolute -right-12 -bottom-12 opacity-5 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[200px]">trending_up</span>
+</div>
+</div>
+<!-- Advanced -->
+<div class="group relative bg-white border border-outline-variant rounded-20px p-lg card-shadow overflow-hidden hover:border-primary transition-all duration-300">
+<div class="relative z-10">
+<div class="bg-purple-50 text-purple-600 px-3 py-1 rounded-full text-label-sm w-fit mb-md">Lvl 3 • Advanced</div>
+<h2 class="font-headline-lg text-headline-lg mb-sm">Master Trader</h2>
+<p class="text-on-surface-variant mb-lg">Options strategies, risk management, and algorithmic thinking.</p>
+<div class="flex items-center gap-xs mb-md">
+<div class="h-1.5 flex-grow bg-surface-variant rounded-full overflow-hidden">
+<div class="h-full bg-purple-500 w-[0%]"></div>
+</div>
+<span class="text-label-sm font-bold text-purple-600">Locked</span>
+</div>
+<button class="flex items-center gap-2 font-bold text-on-surface-variant cursor-not-allowed">Complete Path 2 <span class="material-symbols-outlined">lock</span></button>
+</div>
+<div class="absolute -right-12 -bottom-12 opacity-5 group-hover:scale-110 transition-transform duration-500">
+<span class="material-symbols-outlined text-[200px]">auto_graph</span>
+</div>
+</div>
+</section>
+<!-- Topic Grid & Quizzes -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-xl">
+<div class="lg:col-span-2">
+<div class="flex items-center justify-between mb-md">
+<h3 class="font-headline-sm text-headline-sm">Topic Library</h3>
+<button class="text-primary font-bold text-label-md flex items-center gap-1">View All <span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-md">
+<!-- Topic Card -->
+<div class="p-md bg-white border border-outline-variant rounded-20px card-shadow hover:translate-y-[-4px] transition-all cursor-pointer">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center mb-sm text-primary">
+<span class="material-symbols-outlined">finance_mode</span>
+</div>
+<h4 class="font-title-md text-title-md mb-xs">Stock Market Basics</h4>
+<p class="text-label-md text-on-surface-variant mb-md">How the NYSE works, dividends, and market caps.</p>
+<div class="flex items-center justify-between text-label-sm text-on-surface-variant">
+<span>12 Lessons</span>
+<span class="bg-surface-variant/50 px-2 py-0.5 rounded">Free</span>
+</div>
+</div>
+<div class="p-md bg-white border border-outline-variant rounded-20px card-shadow hover:translate-y-[-4px] transition-all cursor-pointer">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center mb-sm text-primary">
+<span class="material-symbols-outlined">monitoring</span>
+</div>
+<h4 class="font-title-md text-title-md mb-xs">Technical Indicators</h4>
+<p class="text-label-md text-on-surface-variant mb-md">RSI, MACD, and Bollinger Bands explained.</p>
+<div class="flex items-center justify-between text-label-sm text-on-surface-variant">
+<span>8 Lessons</span>
+<span class="bg-primary/10 text-primary px-2 py-0.5 rounded">Popular</span>
+</div>
+</div>
+<div class="p-md bg-white border border-outline-variant rounded-20px card-shadow hover:translate-y-[-4px] transition-all cursor-pointer">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center mb-sm text-primary">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<h4 class="font-title-md text-title-md mb-xs">Fundamental Analysis</h4>
+<p class="text-label-md text-on-surface-variant mb-md">P/E Ratios, Cash Flow, and Balance Sheets.</p>
+<div class="flex items-center justify-between text-label-sm text-on-surface-variant">
+<span>15 Lessons</span>
+<span class="bg-surface-variant/50 px-2 py-0.5 rounded">Pro</span>
+</div>
+</div>
+<div class="p-md bg-white border border-outline-variant rounded-20px card-shadow hover:translate-y-[-4px] transition-all cursor-pointer">
+<div class="w-10 h-10 rounded-xl bg-surface-container-low flex items-center justify-center mb-sm text-primary">
+<span class="material-symbols-outlined">psychology_alt</span>
+</div>
+<h4 class="font-title-md text-title-md mb-xs">Trading Psychology</h4>
+<p class="text-label-md text-on-surface-variant mb-md">Managing FOMO, greed, and the 'revenge' trade.</p>
+<div class="flex items-center justify-between text-label-sm text-on-surface-variant">
+<span>5 Lessons</span>
+<span class="bg-surface-variant/50 px-2 py-0.5 rounded">New</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Daily Challenges & Quiz -->
+<div class="space-y-md">
+<div class="p-lg bg-inverse-surface text-inverse-on-surface rounded-20px shadow-xl relative overflow-hidden">
+<div class="flex items-center justify-between mb-sm">
+<h3 class="font-headline-sm text-headline-sm">Finance Quiz</h3>
+<span id="quiz-progress" class="text-label-sm opacity-70"></span>
+</div>
+<p id="quiz-best-score" class="text-label-md opacity-80 mb-lg"></p>
+<div id="quiz-container" class="relative z-10 space-y-sm">
+<p class="text-label-md opacity-70">Loading quiz...</p>
+</div>
+<div class="absolute top-0 right-0 p-4">
+<span class="material-symbols-outlined text-white/10 text-6xl">quiz</span>
+</div>
+</div>
+<div class="p-lg bg-secondary-container rounded-20px border border-outline-variant/30">
+
+<h3 class="font-title-md text-title-md mb-xs text-on-secondary-container">Glossary Spotlight</h3>
+<p class="text-label-sm uppercase tracking-widest text-on-secondary-container/60 mb-md">Word of the Day</p>
+<div class="mb-lg">
+<h4 class="text-headline-sm font-black text-on-secondary-container">Contango</h4>
+<p class="text-body-md text-on-secondary-container/80 mt-2">A situation where the futures price of a commodity is higher than the spot price.</p>
+</div>
+<button class="w-full py-3 bg-on-secondary-container text-white rounded-xl font-bold flex items-center justify-center gap-2">
+                        Explore Full Glossary <span class="material-symbols-outlined">library_books</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Explain Like I'm 18 Feature -->
+<section class="mt-xl bg-white border border-outline-variant rounded-[40px] p-lg md:p-xl shadow-2xl relative overflow-hidden">
+<div class="flex flex-col md:flex-row gap-xl items-center relative z-10">
+<div class="md:w-1/2">
+<div class="inline-flex items-center gap-2 bg-primary text-white px-4 py-1.5 rounded-full text-label-sm mb-md">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span>EXCLUSIVE AI FEATURE</span>
+</div>
+<h2 class="text-headline-lg font-headline-lg md:text-5xl tracking-tight mb-md">Explain Like I'm 18.</h2>
+<p class="text-body-lg text-on-surface-variant mb-lg">Financial jargon is built to exclude. Our AI breaks down the most complex concepts into simple, relatable analogies without losing the technical precision you need to trade.</p>
+<div class="flex flex-wrap gap-sm mb-lg">
+<button class="px-4 py-2 border border-outline-variant rounded-full text-label-md hover:bg-surface-container-low transition-all">Options Greeks</button>
+<button class="px-4 py-2 border border-outline-variant rounded-full text-label-md hover:bg-surface-container-low transition-all">QE/QT</button>
+<button class="px-4 py-2 border border-outline-variant rounded-full text-label-md hover:bg-surface-container-low transition-all">Yield Curves</button>
+<button class="px-4 py-2 border border-outline-variant rounded-full text-label-md hover:bg-surface-container-low transition-all">Derivatives</button>
+</div>
+<div class="relative">
+<input class="w-full p-4 pr-16 bg-surface-container-lowest border border-outline-variant rounded-2xl focus:ring-4 focus:ring-primary/10 outline-none shadow-inner" placeholder="Drop any complex term here..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white p-2.5 rounded-xl hover:scale-105 transition-transform">
+<span class="material-symbols-outlined">send</span>
+</button>
+</div>
+</div>
+<div class="md:w-1/2 relative h-80 md:h-96 w-full rounded-3xl overflow-hidden shadow-2xl">
+<img class="w-full h-full object-cover" data-alt="A futuristic 3D visualization of complex data being filtered through a glowing crystalline lens, transforming into simple, elegant geometric shapes on the other side. The color palette is high-contrast with deep slate and brilliant cyan accents. Minimalist, premium tech aesthetic with soft, blurred background lighting." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmyRjbcJgt1fHYdKW_iAUEyU-H-cJm5paLjRlLK6bf2rEeDuNmCPz32IR2S5B3CH6xWXMMesO9x2-Z2Iopy7004-nmj6wKln3rbf_Y2Sruj74DuNVASPQiMTze92S7ewBeb8z17NGVzGbh96WYmXAcrwD33MYcmv80p5oCRcBYIgGdiJ_0xNcdxSQStyJhSBHGF6YkmDuUPIiaVxKVO4yhArtWYu8pO1IGcfAxGEYuLIOHZzP2JAePkmN-ysmX7jhFkxlIKdePry8"/>
+<div class="absolute inset-0 bg-gradient-to-t from-primary/40 to-transparent"></div>
+<div class="absolute bottom-6 left-6 right-6 p-4 glass rounded-2xl border border-white/20">
+<p class="text-label-md italic">"Think of Options Theta like an ice cream cone on a hot day. The closer you get to the end of the day (expiry), the faster it melts..."</p>
+</div>
+</div>
+</div>
+<div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl"></div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-xl bg-surface-container-low border-t border-outline-variant/20 mt-xl">
+<div class="flex flex-col items-center gap-md px-gutter max-w-container-max mx-auto text-center">
+<div class="text-label-md font-label-md font-black">TradePilot</div>
+<nav class="flex flex-wrap justify-center gap-md">
+<a class="text-on-surface-variant hover:text-primary hover:underline transition-all text-label-sm font-label-sm" href="#">Glossary</a>
+<a class="text-on-surface-variant hover:text-primary hover:underline transition-all text-label-sm font-label-sm" href="#">Research Methodology</a>
+<a class="text-on-surface-variant hover:text-primary hover:underline transition-all text-label-sm font-label-sm" href="#">Community Guidelines</a>
+<a class="text-on-surface-variant hover:text-primary hover:underline transition-all text-label-sm font-label-sm" href="#">Privacy Policy</a>
+</nav>
+<p class="text-body-md font-body-md text-on-surface-variant max-w-lg opacity-70">© 2024 TradePilot. Empowering effortless mastery through AI intelligence. Investing involves risk. Past performance does not guarantee future results.</p>
+</div>
+</footer>
+<script>
+        // Micro-interactions for lesson cards
+        document.querySelectorAll('.card-shadow').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+                card.style.boxShadow = '0 12px 40px rgba(0, 0, 0, 0.08)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+                card.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.04)';
+            });
+        });
+
+        // Simple tab/active logic for the sidebar
+        const sidebarLinks = document.querySelectorAll('aside nav a');
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                if(link.getAttribute('href') === '#') e.preventDefault();
+                sidebarLinks.forEach(l => {
+                    l.classList.remove('bg-primary-container', 'text-on-primary-container');
+                    l.classList.add('text-on-surface-variant', 'hover:bg-surface-variant/50');
+                });
+                link.classList.add('bg-primary-container', 'text-on-primary-container');
+                link.classList.remove('text-on-surface-variant', 'hover:bg-surface-variant/50');
+            });
+        });
+
+        // Dark mode toggle functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            darkModeToggle.innerText = isDark ? 'light_mode' : 'dark_mode';
+        });
+    </script>
+<script src="assets/auth-guard.js"></script>
+<script src="assets/quiz.js"></script>
+<script src="assets/mentor-chat.js"></script>
+</body></html>
