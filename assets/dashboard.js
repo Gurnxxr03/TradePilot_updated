@@ -78,7 +78,26 @@
       try {
         const res = await fetch(PORTFOLIO_URL, { headers: authHeaders() });
         const data = await res.json();
+<<<<<<< HEAD
         if (res.ok) renderHoldings(data.holdings, data.summary);
+=======
+        if (res.ok) {
+          renderHoldings(data.holdings, data.summary);
+          renderSectorExposure(data.sectorExposure);
+          
+          // Update stats
+          const totalHoldingsEl = document.getElementById('total-holdings-count');
+          const totalSectorsEl = document.getElementById('total-sectors-count');
+          const totalInvestedEl = document.getElementById('total-invested-capital');
+          
+          if (totalHoldingsEl) totalHoldingsEl.textContent = `${data.holdings.length} Position${data.holdings.length === 1 ? '' : 's'}`;
+          if (totalSectorsEl) totalSectorsEl.textContent = `${data.sectorExposure.length} Sector${data.sectorExposure.length === 1 ? '' : 's'}`;
+          if (totalInvestedEl) totalInvestedEl.textContent = fmtMoney(data.summary.totalCost);
+          
+          // Trigger news reload for portfolio
+          loadPortfolioNews();
+        }
+>>>>>>> keshvi-module
       } catch (err) {
         console.error('Could not load holdings', err);
       }
@@ -176,11 +195,304 @@
             loadWatchlist();
           });
         });
+<<<<<<< HEAD
+=======
+
+        loadWatchlistNews();
+>>>>>>> keshvi-module
       } catch (err) {
         console.error('Could not load watchlist', err);
       }
     }
 
+<<<<<<< HEAD
+=======
+    // Set dynamic username
+    const user = window.TradePilotAuth.getUser();
+    if (user) {
+      const nameEl = document.getElementById('dashboard-user-name');
+      if (nameEl) nameEl.textContent = user.name || user.email.split('@')[0];
+    }
+
+    // --- Watchlist Manual Add ---
+    const addWatchlistBtn = document.getElementById('add-watchlist-btn');
+    const addWatchlistForm = document.getElementById('add-watchlist-form');
+    const watchlistSymbolInput = document.getElementById('watchlist-symbol');
+    const saveWatchlistBtn = document.getElementById('save-watchlist-btn');
+    const watchlistError = document.getElementById('watchlist-form-error');
+
+    if (addWatchlistBtn && addWatchlistForm) {
+      addWatchlistBtn.addEventListener('click', () => {
+        addWatchlistForm.classList.toggle('hidden');
+        watchlistSymbolInput.focus();
+      });
+      
+      saveWatchlistBtn.addEventListener('click', async () => {
+        watchlistError.classList.add('hidden');
+        const symbol = watchlistSymbolInput.value.trim().toUpperCase();
+        if (!symbol || !/^[A-Z]{1,6}$/.test(symbol)) {
+          watchlistError.textContent = 'Please enter a valid stock symbol (1-6 letters).';
+          watchlistError.classList.remove('hidden');
+          return;
+        }
+        
+        saveWatchlistBtn.disabled = true;
+        saveWatchlistBtn.textContent = 'Adding...';
+        
+        try {
+          const res = await fetch(WATCHLIST_URL, {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ symbol })
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to add to watchlist.');
+          }
+          watchlistSymbolInput.value = '';
+          addWatchlistForm.classList.add('hidden');
+          loadWatchlist();
+        } catch (err) {
+          watchlistError.textContent = err.message || 'Could not add to watchlist.';
+          watchlistError.classList.remove('hidden');
+        } finally {
+          saveWatchlistBtn.disabled = false;
+          saveWatchlistBtn.textContent = 'Add';
+        }
+      });
+    }
+
+    // --- Profile Editing Modal ---
+    const openProfileBtn = document.getElementById('open-profile-edit-btn');
+    const profileModal = document.getElementById('edit-profile-modal');
+    const closeProfileBtn = document.getElementById('close-profile-modal-btn');
+    const cancelProfileBtn = document.getElementById('cancel-profile-btn');
+    const profileForm = document.getElementById('profile-edit-form');
+    const profileEditError = document.getElementById('profile-edit-error');
+    const profileEditSuccess = document.getElementById('profile-edit-success');
+
+    if (openProfileBtn && profileModal) {
+      openProfileBtn.addEventListener('click', async () => {
+        profileEditError.classList.add('hidden');
+        profileEditSuccess.classList.add('hidden');
+        profileModal.classList.remove('hidden');
+        
+        try {
+          const res = await fetch('/api/onboarding', { headers: authHeaders() });
+          const data = await res.json();
+          if (res.ok && data.preferences) {
+            const prefs = data.preferences;
+            document.getElementById('edit-user-type').value = prefs.user_type || 'learner';
+            document.getElementById('edit-experience-level').value = prefs.experience_level || 'Beginner';
+            document.getElementById('edit-risk-preference').value = prefs.risk_preference || 'Medium';
+            document.getElementById('edit-learning-preference').value = prefs.learning_preference || 'Text articles';
+            
+            const goals = prefs.goals || [];
+            document.querySelectorAll('input[name="edit-goal"]').forEach(cb => {
+              cb.checked = goals.includes(cb.value);
+            });
+            
+            const sectors = prefs.favorite_sectors || [];
+            document.querySelectorAll('input[name="edit-sector"]').forEach(cb => {
+              cb.checked = sectors.includes(cb.value);
+            });
+          }
+        } catch (err) {
+          console.error('Could not prefill user preferences:', err);
+        }
+      });
+
+      const hideModal = () => {
+        profileModal.classList.add('hidden');
+      };
+      
+      closeProfileBtn.addEventListener('click', hideModal);
+      cancelProfileBtn.addEventListener('click', hideModal);
+      
+      profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        profileEditError.classList.add('hidden');
+        profileEditSuccess.classList.add('hidden');
+        
+        const userType = document.getElementById('edit-user-type').value;
+        const experienceLevel = document.getElementById('edit-experience-level').value;
+        const riskPreference = document.getElementById('edit-risk-preference').value;
+        const learningPreference = document.getElementById('edit-learning-preference').value;
+        
+        const goals = [];
+        document.querySelectorAll('input[name="edit-goal"]:checked').forEach(cb => {
+          goals.push(cb.value);
+        });
+        
+        const sectors = [];
+        document.querySelectorAll('input[name="edit-sector"]:checked').forEach(cb => {
+          sectors.push(cb.value);
+        });
+        
+        const saveBtn = document.getElementById('save-profile-btn-modal');
+        saveBtn.disabled = true;
+        saveBtn.textContent = 'Saving...';
+        
+        try {
+          const res = await fetch('/api/onboarding', {
+            method: 'POST',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({
+              experienceLevel,
+              userType,
+              riskPreference,
+              learningPreference,
+              goals,
+              sectors
+            })
+          });
+          
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.error || 'Failed to save changes.');
+          }
+          
+          profileEditSuccess.textContent = 'Profile preferences updated successfully!';
+          profileEditSuccess.classList.remove('hidden');
+          
+          const localUser = window.TradePilotAuth.getUser();
+          if (localUser) {
+            localUser.onboardingCompleted = true;
+            localStorage.setItem('tradepilot_user', JSON.stringify(localUser));
+          }
+          
+          setTimeout(() => {
+            hideModal();
+          }, 1000);
+        } catch (err) {
+          profileEditError.textContent = err.message || 'Could not save profile changes.';
+          profileEditError.classList.remove('hidden');
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.textContent = 'Save Changes';
+        }
+      });
+    }
+
+    // --- Sector Exposure Render ---
+    function renderSectorExposure(exposure) {
+      const container = document.getElementById('sector-exposure-chart-container');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      if (!exposure || exposure.length === 0) {
+        container.innerHTML = `<p id="sector-empty-state" class="text-label-md text-on-surface-variant dark:text-outline-variant self-center text-center">Add holdings below to see your sector exposure breakdown.</p>`;
+        return;
+      }
+      
+      // Sort exposure descending by percentage
+      exposure.sort((a, b) => b.percentage - a.percentage);
+      
+      exposure.forEach((item, idx) => {
+        const bar = document.createElement('div');
+        const bgClass = idx === 0 ? 'bg-primary dark:bg-primary-fixed-dim' : 'bg-surface-container-high dark:bg-outline-variant';
+        const hoverClass = idx === 0 ? 'hover:opacity-85' : 'hover:bg-primary-container/20';
+        
+        bar.className = `flex-1 max-w-[64px] w-full ${bgClass} ${hoverClass} rounded-t-xl transition-all cursor-pointer group relative`;
+        const hPercent = Math.max(12, Math.round(item.percentage)); // ensure at least 12% for visual bar appearance
+        bar.style.height = `${hPercent}%`;
+        
+        bar.innerHTML = `
+          <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-on-surface text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">${item.sector}: ${item.percentage}%</div>
+          <div class="absolute -bottom-6 left-1/2 -translate-x-1/2 text-[10px] font-bold text-on-surface-variant dark:text-outline-variant truncate w-full text-center">${item.sector.slice(0, 10)}</div>
+        `;
+        container.appendChild(bar);
+      });
+    }
+
+    // --- Narrative Intelligence News ---
+    const portfolioNewsList = document.getElementById('portfolio-news-list');
+    const watchlistNewsList = document.getElementById('watchlist-news-list');
+    
+    function renderNews(listElement, newsItems, emptyText) {
+      if (!listElement) return;
+      listElement.innerHTML = '';
+      if (!newsItems || newsItems.length === 0) {
+        listElement.innerHTML = `<p class="col-span-12 text-label-sm text-on-surface-variant dark:text-outline-variant">${emptyText}</p>`;
+        return;
+      }
+      
+      newsItems.forEach(item => {
+        const card = document.createElement('a');
+        card.href = `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`;
+        card.target = '_blank';
+        card.className = 'glass-card p-sm flex gap-md items-center group cursor-pointer hover:shadow-md transition-all bg-white dark:bg-surface-container border border-outline-variant/30 rounded-xl';
+        
+        card.innerHTML = `
+          <div class="w-12 h-12 rounded-xl bg-primary-container/20 flex items-center justify-center font-bold text-primary dark:text-primary-fixed-dim shrink-0">
+            ${item.symbol}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex gap-2 mb-1 items-center">
+               <span class="bg-primary/10 text-primary dark:text-primary-fixed-dim text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">${item.symbol}</span>
+               <span class="text-[10px] text-on-surface-variant dark:text-outline-variant">${new Date(item.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+            </div>
+            <h4 class="text-label-sm font-bold group-hover:text-primary dark:group-hover:text-primary-fixed-dim transition-colors truncate dark:text-inverse-on-surface">${item.title}</h4>
+            <p class="text-[11px] text-on-surface-variant dark:text-outline-variant line-clamp-2 mt-0.5">${item.description}</p>
+          </div>
+        `;
+        listElement.appendChild(card);
+      });
+    }
+
+    async function loadPortfolioNews() {
+      if (!portfolioNewsList) return;
+      try {
+        const res = await fetch('/api/portfolio/news', { headers: authHeaders() });
+        const data = await res.json();
+        if (res.ok) {
+          renderNews(portfolioNewsList, data.news, 'Add holdings below to see news linked to your portfolio.');
+        }
+      } catch (err) {
+        console.error('Could not load portfolio news', err);
+      }
+    }
+
+    async function loadWatchlistNews() {
+      if (!watchlistNewsList) return;
+      try {
+        const res = await fetch('/api/watchlist/news', { headers: authHeaders() });
+        const data = await res.json();
+        if (res.ok) {
+          renderNews(watchlistNewsList, data.news, 'Add symbols to your watchlist to see watchlist news.');
+        }
+      } catch (err) {
+        console.error('Could not load watchlist news', err);
+      }
+    }
+
+    // Tab interaction
+    const tabPortfolioBtn = document.getElementById('tab-portfolio-news');
+    const tabWatchlistBtn = document.getElementById('tab-watchlist-news');
+
+    if (tabPortfolioBtn && tabWatchlistBtn) {
+      tabPortfolioBtn.addEventListener('click', () => {
+        // Toggle tab styles
+        tabPortfolioBtn.className = 'px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
+        tabWatchlistBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
+        
+        // Show/hide lists
+        portfolioNewsList.classList.remove('hidden');
+        watchlistNewsList.classList.add('hidden');
+      });
+
+      tabWatchlistBtn.addEventListener('click', () => {
+        // Toggle tab styles
+        tabWatchlistBtn.className = 'px-4 py-1.5 bg-primary dark:bg-primary-fixed-dim text-white dark:text-primary rounded-lg font-bold text-label-sm transition-all shadow-sm';
+        tabPortfolioBtn.className = 'px-4 py-1.5 text-on-surface-variant hover:text-primary dark:text-outline-variant dark:hover:text-inverse-primary rounded-lg font-bold text-label-sm transition-all';
+        
+        // Show/hide lists
+        watchlistNewsList.classList.remove('hidden');
+        portfolioNewsList.classList.add('hidden');
+      });
+    }
+
+>>>>>>> keshvi-module
     loadHoldings();
     loadWatchlist();
   });

@@ -86,7 +86,48 @@ async function init() {
       UNIQUE(user_id, symbol)
     );
   `);
+<<<<<<< HEAD
 
+=======
+    await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_preferences (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      experience_level TEXT,
+      user_type TEXT,
+      risk_preference TEXT,
+      learning_preference TEXT,
+      goals TEXT[],
+      favorite_sectors TEXT[],
+      onboarding_completed BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT
+       NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS portfolio_news (
+      id SERIAL PRIMARY KEY,
+      symbol TEXT,
+      title TEXT,
+      description TEXT,
+      url TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS watchlist_news (
+      id SERIAL PRIMARY KEY,
+      symbol TEXT,
+      title TEXT,
+      description TEXT,
+      url TEXT,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+>>>>>>> keshvi-module
   console.log('✅ Connected to database, all tables ready.');
 }
 
@@ -271,5 +312,150 @@ module.exports = {
 
   async updatePasswordHash(userId, passwordHash) {
     await pool.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [passwordHash, userId]);
+<<<<<<< HEAD
+=======
+  }, 
+
+  async saveUserPreferences(userId, data) {
+  const {
+    experienceLevel,
+    userType,
+    riskPreference,
+    learningPreference,
+    goals,
+    favoriteSectors
+  } = data;
+
+  const { rows } = await pool.query(
+    `
+    INSERT INTO user_preferences (
+      user_id,
+      experience_level,
+      user_type,
+      risk_preference,
+      learning_preference,
+      goals,
+      favorite_sectors,
+      onboarding_completed
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7,true)
+    ON CONFLICT(user_id)
+    DO UPDATE SET
+      experience_level = EXCLUDED.experience_level,
+      user_type = EXCLUDED.user_type,
+      risk_preference = EXCLUDED.risk_preference,
+      learning_preference = EXCLUDED.learning_preference,
+      goals = EXCLUDED.goals,
+      favorite_sectors = EXCLUDED.favorite_sectors,
+      onboarding_completed = true,
+      updated_at = NOW()
+    RETURNING *;
+    `,
+    [
+      userId,
+      experienceLevel,
+      userType,
+      riskPreference,
+      learningPreference,
+      goals,
+      favoriteSectors
+    ]
+  );
+
+  return rows[0];
+  },
+  async getUserPreferences(userId) {
+    const { rows } = await pool.query(
+
+        `SELECT * FROM user_preferences WHERE user_id=$1`,
+
+        [userId]
+
+    );
+
+    return rows[0] || null;
+
+  },
+
+  async updateHolding(userId, holdingId, holding) {
+    const { symbol, quantity, avgCost } = holding;
+    const { rows } = await pool.query(
+
+        `UPDATE holdings
+         SET symbol=$1,
+             quantity=$2,
+             avg_cost=$3
+         WHERE id=$4
+         AND user_id=$5
+         RETURNING id,
+                   symbol,
+                   quantity,
+                   avg_cost AS "avgCost"`,
+
+        [
+
+            symbol,
+
+            quantity,
+
+            avgCost,
+
+            holdingId,
+
+            userId
+
+        ]
+
+    );
+
+    return rows[0];
+
+  },
+
+  async getPortfolioSummary(userId) {
+    const { rows } = await pool.query(
+        `SELECT
+            COUNT(*) holdings,
+            COALESCE(SUM(quantity*avg_cost),0) invested
+         FROM holdings
+         WHERE user_id=$1`,
+        [userId]
+    );
+    return rows[0];
+  },
+
+  async getWatchlistCount(userId){
+    const { rows } = await pool.query(
+        `SELECT COUNT(*) total
+         FROM watchlist
+         WHERE user_id=$1`,
+        [userId]
+    );
+    return rows[0];
+  },
+
+  async getNewsForSymbols(table, symbols) {
+    if (!symbols || symbols.length === 0) return [];
+    const tableName = table === 'portfolio' ? 'portfolio_news' : 'watchlist_news';
+    const { rows } = await pool.query(
+      `SELECT id, symbol, title, description, url, created_at AS "createdAt"
+       FROM ${tableName}
+       WHERE symbol = ANY($1)
+       ORDER BY created_at DESC LIMIT 20`,
+      [symbols]
+    );
+    return rows;
+  },
+
+  async saveNewsItem(table, { symbol, title, description, url }) {
+    const tableName = table === 'portfolio' ? 'portfolio_news' : 'watchlist_news';
+    const { rows } = await pool.query(
+      `INSERT INTO ${tableName} (symbol, title, description, url)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, symbol, title, description, url, created_at AS "createdAt"`,
+      [symbol, title, description, url]
+    );
+    return rows[0];
+>>>>>>> keshvi-module
   }
 };

@@ -2,6 +2,10 @@ const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
 const { getMockQuote } = require('./mock-market');
+<<<<<<< HEAD
+=======
+const { getOrGenerateNews } = require('./news-service');
+>>>>>>> keshvi-module
 
 const router = express.Router();
 
@@ -50,4 +54,27 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
+=======
+// GET /api/watchlist/news — list news linked to watchlist
+router.get('/news', requireAuth, async (req, res) => {
+  try {
+    const items = await db.listWatchlist(req.user.id);
+    const symbols = [...new Set(items.map(item => item.symbol.trim().toUpperCase()))];
+    if (symbols.length === 0) {
+      return res.json({ news: [] });
+    }
+    const news = await getOrGenerateNews('watchlist', symbols);
+    const sanitized = news.map(item => ({
+      ...item,
+      url: `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`
+    }));
+    res.json({ news: sanitized });
+  } catch (err) {
+    console.error('Watchlist news error:', err);
+    res.status(500).json({ error: 'Could not load watchlist news.' });
+  }
+});
+
+>>>>>>> keshvi-module
 module.exports = router;

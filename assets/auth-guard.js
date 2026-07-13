@@ -32,6 +32,47 @@ document.addEventListener('DOMContentLoaded', function () {
     return;
   }
 
+<<<<<<< HEAD
+=======
+  // Handle onboarding redirects & session sync
+  const isOnboardingPage = window.location.pathname.endsWith('onboarding.html');
+  if (token && user) {
+    // Fast path local storage check
+    if (user.onboardingCompleted === false && !isOnboardingPage && requiresAuth) {
+      window.location.href = 'onboarding.html';
+      return;
+    }
+    if (user.onboardingCompleted === true && isOnboardingPage) {
+      window.location.href = 'dashboard.html';
+      return;
+    }
+
+    // Dynamic verification path
+    fetch('/api/auth/me', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.user) {
+        const updatedUser = { 
+          id: data.user.id, 
+          name: data.user.name, 
+          email: data.user.email, 
+          onboardingCompleted: data.user.onboardingCompleted 
+        };
+        localStorage.setItem('tradepilot_user', JSON.stringify(updatedUser));
+        
+        if (!data.user.onboardingCompleted && !isOnboardingPage && requiresAuth) {
+          window.location.href = 'onboarding.html';
+        } else if (data.user.onboardingCompleted && isOnboardingPage) {
+          window.location.href = 'dashboard.html';
+        }
+      }
+    })
+    .catch(err => console.error('Failed to sync auth session:', err));
+  }
+
+>>>>>>> keshvi-module
   // Wire up the account icon in the top nav
   const accountBtn = document.getElementById('nav-account-btn');
   if (accountBtn) {

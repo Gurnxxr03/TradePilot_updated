@@ -4,6 +4,10 @@ const cors = require('cors');
 const fetch = require('node-fetch');
 const path = require('path');
 const { router: authRouter, requireAuth } = require('./auth');
+<<<<<<< HEAD
+=======
+const onboardingRouter = require('./onboarding');
+>>>>>>> keshvi-module
 const alertsRouter = require('./alerts');
 const narrativeRouter = require('./narrative');
 const quizRouter = require('./quiz');
@@ -21,6 +25,10 @@ app.use(express.json());
 
 // Auth routes: /api/auth/signup, /api/auth/signin, /api/auth/me, /api/auth/profile, /api/auth/change-password
 app.use('/api/auth', authRouter);
+<<<<<<< HEAD
+=======
+app.use('/api/onboarding', onboardingRouter);
+>>>>>>> keshvi-module
 app.use('/api/alerts', alertsRouter);
 app.use('/api/narrative', narrativeRouter);
 app.use('/api/quiz', quizRouter);

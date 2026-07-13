@@ -2,6 +2,10 @@ const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
 const { getMockQuote } = require('./mock-market');
+<<<<<<< HEAD
+=======
+const { getOrGenerateNews } = require('./news-service');
+>>>>>>> keshvi-module
 
 const router = express.Router();
 
@@ -16,6 +20,10 @@ router.get('/', requireAuth, async (req, res) => {
 
     let totalValue = 0;
     let totalCost = 0;
+<<<<<<< HEAD
+=======
+    const sectorMap = {};
+>>>>>>> keshvi-module
 
     const enriched = holdings.map((h) => {
       const quote = getMockQuote(h.symbol);
@@ -29,9 +37,19 @@ router.get('/', requireAuth, async (req, res) => {
       totalValue += marketValue;
       totalCost += costBasis;
 
+<<<<<<< HEAD
       return {
         ...h,
         currentPrice: quote.price,
+=======
+      const sector = quote.sector || 'Other';
+      sectorMap[sector] = (sectorMap[sector] || 0) + marketValue;
+
+      return {
+        ...h,
+        currentPrice: quote.price,
+        sector,
+>>>>>>> keshvi-module
         marketValue: Math.round(marketValue * 100) / 100,
         gain: Math.round(gain * 100) / 100,
         gainPercent: Math.round(gainPercent * 100) / 100
@@ -41,6 +59,20 @@ router.get('/', requireAuth, async (req, res) => {
     const totalGain = totalValue - totalCost;
     const totalGainPercent = totalCost > 0 ? (totalGain / totalCost) * 100 : 0;
 
+<<<<<<< HEAD
+=======
+    const sectorExposure = [];
+    if (totalValue > 0) {
+      for (const [sec, val] of Object.entries(sectorMap)) {
+        sectorExposure.push({
+          sector: sec,
+          value: Math.round(val * 100) / 100,
+          percentage: Math.round((val / totalValue) * 100 * 100) / 100
+        });
+      }
+    }
+
+>>>>>>> keshvi-module
     res.json({
       holdings: enriched,
       summary: {
@@ -48,7 +80,12 @@ router.get('/', requireAuth, async (req, res) => {
         totalCost: Math.round(totalCost * 100) / 100,
         totalGain: Math.round(totalGain * 100) / 100,
         totalGainPercent: Math.round(totalGainPercent * 100) / 100
+<<<<<<< HEAD
       }
+=======
+      },
+      sectorExposure
+>>>>>>> keshvi-module
     });
   } catch (err) {
     console.error('List holdings error:', err);
@@ -100,4 +137,27 @@ router.delete('/:id', requireAuth, async (req, res) => {
   }
 });
 
+<<<<<<< HEAD
+=======
+// GET /api/portfolio/news — list news linked to holdings
+router.get('/news', requireAuth, async (req, res) => {
+  try {
+    const holdings = await db.listHoldings(req.user.id);
+    const symbols = [...new Set(holdings.map(h => h.symbol.trim().toUpperCase()))];
+    if (symbols.length === 0) {
+      return res.json({ news: [] });
+    }
+    const news = await getOrGenerateNews('portfolio', symbols);
+    const sanitized = news.map(item => ({
+      ...item,
+      url: `https://finance.yahoo.com/quote/${item.symbol.trim().toUpperCase()}/news`
+    }));
+    res.json({ news: sanitized });
+  } catch (err) {
+    console.error('Portfolio news error:', err);
+    res.status(500).json({ error: 'Could not load portfolio news.' });
+  }
+});
+
+>>>>>>> keshvi-module
 module.exports = router;
