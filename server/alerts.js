@@ -30,11 +30,47 @@ router.get('/', requireAuth, async (req, res) => {
     const alerts = await db.listAlerts(req.user.id);
 
     const updated = await Promise.all(alerts.map(async (alert) => {
-      const currentPrice = getMockPrice(alert.symbol);
+
+      router.get('/', requireAuth, async (req, res) => {
+  try {
+    const alerts = await db.listAlerts(req.user.id);
+
+    const updated = await Promise.all(alerts.map(async (alert) => {
+      const currentPrice = await getMockPrice(alert.symbol);
 
       if (!MONITORED_TYPES.includes(alert.alertType) || alert.status !== 'active') {
         return { ...alert, currentPrice, monitored: MONITORED_TYPES.includes(alert.alertType) };
       }
+
+      const target = Number(alert.targetPrice);
+      const shouldTrigger =
+        (alert.condition === 'above' && currentPrice >= target) ||
+        (alert.condition === 'below' && currentPrice <= target);
+
+      if (shouldTrigger) {
+        const triggeredAt = new Date().toISOString();
+        await db.updateAlertStatus(alert.id, {
+          status: 'triggered',
+          lastCheckedPrice: currentPrice,
+          triggeredAt
+        });
+        return { ...alert, status: 'triggered', currentPrice, triggeredAt, monitored: true };
+      }
+
+      await db.updateAlertStatus(alert.id, {
+        status: 'active',
+        lastCheckedPrice: currentPrice,
+        triggeredAt: alert.triggeredAt || null
+      });
+      return { ...alert, currentPrice, monitored: true };
+    }));
+
+    res.json({ alerts: updated });
+  } catch (err) {
+    console.error('List alerts error:', err);
+    res.status(500).json({ error: 'Could not load alerts.' });
+  }
+});
 
       const target = Number(alert.targetPrice);
       const shouldTrigger =
@@ -102,7 +138,7 @@ router.post('/', requireAuth, async (req, res) => {
       targetPrice: priceToSave
     });
 
-    res.json({ alert: { ...alert, currentPrice: getMockPrice(alert.symbol), monitored: isMonitoredType } });
+res.json({ alert: { ...alert, currentPrice: await getMockPrice(alert.symbol), monitored: isMonitoredType } });
   } catch (err) {
     console.error('Create alert error:', err);
     res.status(500).json({ error: 'Could not create alert.' });
