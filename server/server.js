@@ -30,6 +30,9 @@ app.use('/api/market', marketRouter);
 
 // Serve the static frontend files (home.html, explore.html, etc.)
 app.use(express.static(path.join(__dirname, '..')));
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../home.html'));
+});
 
 // GET /api/chat/history — load this user's past AI Mentor conversation
 app.get('/api/chat/history', requireAuth, async (req, res) => {
