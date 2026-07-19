@@ -35,8 +35,6 @@ function getMockPrice(symbolRaw) {
   return Math.round(price * 100) / 100;
 }
 
-<<<<<<< HEAD
-=======
 const STOCK_SECTORS = {
   NVDA: 'Technology',
   AAPL: 'Technology',
@@ -49,18 +47,25 @@ const STOCK_SECTORS = {
   XOM: 'Energy'
 };
 
-const SECTORS_LIST = ['Technology', 'Healthcare', 'Finance', 'Energy', 'Consumer Discretionary', 'Industrials'];
+const SECTORS_LIST = [
+  'Technology',
+  'Healthcare',
+  'Finance',
+  'Energy',
+  'Consumer Discretionary',
+  'Industrials'
+];
 
 function getSectorForSymbol(symbolRaw) {
   const symbol = symbolRaw.trim().toUpperCase();
+
   if (STOCK_SECTORS[symbol]) {
     return STOCK_SECTORS[symbol];
   }
+
   const seed = hashSymbol(symbol);
   return SECTORS_LIST[seed % SECTORS_LIST.length];
 }
-
->>>>>>> keshvi-module
 // Returns a fuller quote: current price plus a plausible day-change percent,
 // both deterministic based on the symbol and current time.
 function getMockQuote(symbolRaw) {
@@ -71,14 +76,17 @@ function getMockQuote(symbolRaw) {
   const changeWave = Math.sin((minutesSinceEpoch + seed * 2) / 30);
   const changePercent = Math.round(changeWave * 3 * 100) / 100; // +/- 3%
   const changeAbs = Math.round(price * (changePercent / 100) * 100) / 100;
-<<<<<<< HEAD
-  return { symbol, price, changePercent, changeAbs };
+return {
+  symbol,
+  price,
+  changePercent,
+  changeAbs,
+  sector: getSectorForSymbol(symbol)
+};
 }
 
-module.exports = { getMockPrice, getMockQuote };
-=======
-  return { symbol, price, changePercent, changeAbs, sector: getSectorForSymbol(symbol) };
-}
-
-module.exports = { getMockPrice, getMockQuote, getSectorForSymbol };
->>>>>>> keshvi-module
+module.exports = {
+  getMockPrice,
+  getMockQuote,
+  getSectorForSymbol
+};
