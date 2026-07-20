@@ -1,16 +1,26 @@
 const express = require('express');
 const { requireAuth } = require('./auth');
 const { getRealQuote, getHistoricalData, getFundamentals, getNews } = require('./yahoo-finance');
-const { getSectorForSymbol } = require('./mock-market'); // temporary fallback until sector is always populated by Component 3
+const { getSectorForSymbol, LEGIT_SYMBOLS } = require('./mock-market'); // getSectorForSymbol: temporary fallback until sector is always populated by Component 3. LEGIT_SYMBOLS: used only to power the autocomplete list below, NOT to restrict real lookups.
 const { getAIAnalysis } = require('./ai-analysis');
 
 const router = express.Router();
 const VALID_RANGES = ['1D', '1W', '1M', '3M', '1Y'];
 
 function isValidSymbol(symbol) {
-  // allow letters, dots, hyphens for symbols like BRK.B or RELIANCE.NS
+  // Intentionally permissive — allows letters, dots, hyphens for symbols like BRK.B or RELIANCE.NS.
+  // Do NOT restrict this to LEGIT_SYMBOLS: since Explore now pulls real Yahoo Finance data,
+  // it must support any valid real-world ticker, not just a fixed whitelist built for the old mock data.
   return typeof symbol === 'string' && /^[A-Za-z.\-]{1,15}$/.test(symbol.trim());
 }
+
+// GET /api/market/symbols
+// Used by the dashboard/watchlist autocomplete dropdown for suggestions as you type.
+// This is a curated convenience list for the autocomplete UI only — it does not limit which
+// symbols can actually be looked up via /quote, /chart, /fundamentals, /news, or /ai-analysis.
+router.get('/symbols', requireAuth, (req, res) => {
+  res.json({ symbols: LEGIT_SYMBOLS });
+});
 
 // GET /api/market/quote?symbol=AAPL
 router.get('/quote', requireAuth, async (req, res) => {
@@ -93,6 +103,7 @@ router.get('/news', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/market/ai-analysis?symbol=AAPL
 router.get('/ai-analysis', requireAuth, async (req, res) => {
   const { symbol } = req.query;
   if (!isValidSymbol(symbol)) {

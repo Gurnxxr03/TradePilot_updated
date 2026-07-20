@@ -1,13 +1,13 @@
 const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
-const { getMockQuote } = require('./mock-market');
+const { getMockQuote, LEGIT_SYMBOLS } = require('./mock-market');
 const { getOrGenerateNews } = require('./news-service');
 
 const router = express.Router();
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && /^[A-Za-z]{1,6}$/.test(symbol.trim());
+  return typeof symbol === 'string' && LEGIT_SYMBOLS.some(s => s.symbol === symbol.trim().toUpperCase());
 }
 
 // GET /api/portfolio — list holdings with live (mock) valuation
@@ -19,9 +19,8 @@ router.get('/', requireAuth, async (req, res) => {
     let totalCost = 0;
     const sectorMap = {};
 
-    const enriched = holdings.map((h) => {
-      const quote = getMockQuote(h.symbol);
-
+    const enriched = await Promise.all(holdings.map(async (h) => {
+      const quote = await getMockQuote(h.symbol);
       const quantity = Number(h.quantity);
       const avgCost = Number(h.avgCost);
 
@@ -44,7 +43,7 @@ router.get('/', requireAuth, async (req, res) => {
         gain: Math.round(gain * 100) / 100,
         gainPercent: Math.round(gainPercent * 100) / 100
       };
-    });
+    }));
 
     const totalGain = totalValue - totalCost;
     const totalGainPercent =
@@ -84,10 +83,7 @@ router.post('/', requireAuth, async (req, res) => {
     const { symbol, quantity, avgCost } = req.body;
 
     if (!isValidSymbol(symbol)) {
-      return res.status(400).json({
-        error:
-          'Please enter a valid stock symbol (letters only, e.g. AAPL).'
-      });
+      return res.status(400).json({ error: 'Please enter a supported stock symbol (e.g. AAPL, TSLA, NVDA).' });
     }
 
     const qty = Number(quantity);

@@ -30,14 +30,44 @@ app.use('/api/watchlist', watchlistRouter);
 app.use('/api/market', marketRouter);
 //app.use('/api/explore', require('./explore'));
 
-// Serve static frontend files
+// Middleware to redirect direct .html requests to clean paths
+app.use((req, res, next) => {
+  if (req.path.endsWith('.html') && req.method === 'GET') {
+    const query = req.url.slice(req.path.length);
+    const cleanPath = req.path.slice(0, -5);
+    return res.redirect(301, cleanPath + query);
+  }
+  next();
+});
+
+// Serve the static frontend files
 app.use(express.static(path.join(__dirname, '..')));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../home.html'));
 });
 
-// GET /api/chat/history
+// Route handlers for clean paths
+const cleanPages = [
+  'home',
+  'dashboard',
+  'explore',
+  'alerts',
+  'learn',
+  'today',
+  'settings',
+  'signin',
+  'signup',
+  'onboarding'
+];
+
+cleanPages.forEach(page => {
+  app.get(`/${page}`, (req, res) => {
+    res.sendFile(path.join(__dirname, `../${page}.html`));
+  });
+});
+
+// GET /api/chat/history — load this user's past AI Mentor conversation
 app.get('/api/chat/history', requireAuth, async (req, res) => {
   try {
     const history = await db.getChatHistory(req.user.id);

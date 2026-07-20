@@ -1,20 +1,20 @@
 const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
-const { getMockQuote } = require('./mock-market');
+const { getMockQuote, LEGIT_SYMBOLS } = require('./mock-market');
 const { getOrGenerateNews } = require('./news-service');
 
 const router = express.Router();
 
 function isValidSymbol(symbol) {
-  return typeof symbol === 'string' && /^[A-Za-z]{1,6}$/.test(symbol.trim());
+  return typeof symbol === 'string' && LEGIT_SYMBOLS.some(s => s.symbol === symbol.trim().toUpperCase());
 }
 
 // GET /api/watchlist — list saved symbols with live (mock) quotes
 router.get('/', requireAuth, async (req, res) => {
   try {
     const items = await db.listWatchlist(req.user.id);
-    const enriched = items.map((item) => ({ ...item, quote: getMockQuote(item.symbol) }));
+    const enriched = await Promise.all(items.map(async (item) => ({ ...item, quote: await getMockQuote(item.symbol) })));
     res.json({ watchlist: enriched });
   } catch (err) {
     console.error('List watchlist error:', err);
@@ -27,10 +27,10 @@ router.post('/', requireAuth, async (req, res) => {
   try {
     const { symbol } = req.body;
     if (!isValidSymbol(symbol)) {
-      return res.status(400).json({ error: 'Please enter a valid stock symbol (letters only, e.g. AAPL).' });
+      return res.status(400).json({ error: 'Please enter a supported stock symbol (e.g. AAPL, TSLA, NVDA).' });
     }
     const item = await db.addToWatchlist(req.user.id, symbol.trim().toUpperCase());
-    res.json({ item: { ...item, quote: getMockQuote(item.symbol) } });
+    res.json({ item: { ...item, quote: await getMockQuote(item.symbol) } });
   } catch (err) {
     console.error('Add watchlist error:', err);
     res.status(500).json({ error: 'Could not add to watchlist.' });

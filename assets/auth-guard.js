@@ -20,7 +20,7 @@ window.TradePilotAuth = {
   logout: function () {
     localStorage.removeItem('tradepilot_token');
     localStorage.removeItem('tradepilot_user');
-    window.location.href = 'signin.html';
+    window.location.href = '/signin';
   }
 };
 
@@ -31,29 +31,45 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Protect app pages: bounce to sign-in if not logged in
   if (requiresAuth && !token) {
-    window.location.href = 'signin.html';
+    window.location.href = '/signin';
     return;
   }
 
-  // Handle onboarding redirects & session sync
-  const isOnboardingPage = window.location.pathname.endsWith('onboarding.html');
 
+  // Handle onboarding redirects & session sync
+  const isOnboardingPage = window.location.pathname.includes('onboarding');
   if (token && user) {
     // Fast path using local storage
     if (user.onboardingCompleted === false && !isOnboardingPage && requiresAuth) {
-      window.location.href = 'onboarding.html';
+      window.location.href = '/onboarding';
       return;
     }
 
     if (user.onboardingCompleted === true && isOnboardingPage) {
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';
       return;
     }
 
     // Verify with server and refresh stored user info
     fetch('/api/auth/me', {
-      headers: {
-        Authorization: 'Bearer ' + token
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.user) {
+        const updatedUser = { 
+          id: data.user.id, 
+          name: data.user.name, 
+          email: data.user.email, 
+          onboardingCompleted: data.user.onboardingCompleted 
+        };
+        localStorage.setItem('tradepilot_user', JSON.stringify(updatedUser));
+        
+        if (!data.user.onboardingCompleted && !isOnboardingPage && requiresAuth) {
+          window.location.href = '/onboarding';
+        } else if (data.user.onboardingCompleted && isOnboardingPage) {
+          window.location.href = '/dashboard';
+        }
       }
     })
       .then(res => res.json())
@@ -95,7 +111,27 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     } else {
       accountBtn.title = 'Sign in';
-      accountBtn.setAttribute('href', 'signin.html');
+      accountBtn.setAttribute('href', '/signin');
     }
+  }
+
+  // Wire up the AI sidebar toggle
+  const aiToggle = document.getElementById('ai-toggle');
+  const aiSidebar = document.getElementById('ai-sidebar');
+  if (aiToggle && aiSidebar) {
+    aiToggle.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      aiSidebar.classList.toggle('translate-x-full');
+      aiSidebar.classList.toggle('translate-x-0');
+    });
+
+    // Close when clicking outside of the sidebar
+    document.addEventListener('click', function (e) {
+      if (!aiSidebar.contains(e.target) && !aiToggle.contains(e.target) && !aiSidebar.classList.contains('translate-x-full')) {
+        aiSidebar.classList.add('translate-x-full');
+        aiSidebar.classList.remove('translate-x-0');
+      }
+    });
   }
 });

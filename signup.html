@@ -150,8 +150,8 @@
 <body class="bg-background text-on-surface font-body-md min-h-screen">
 <nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-md border-b border-outline-variant/30 shadow-sm">
 <div class="flex justify-between items-center h-16 px-gutter max-w-container-max mx-auto">
-<a href="home.html" class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</a>
-<a href="signin.html" class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">Already have an account? <span class="text-primary font-bold">Sign In</span></a>
+<a href="/home"" class="text-title-md font-title-md font-bold text-primary tracking-tight">TradePilot</a>
+<a href="/signin"" class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors">Already have an account? <span class="text-primary font-bold">Sign In</span></a>
 </div>
 </nav>
 
@@ -309,7 +309,7 @@ By signing up, you agree this is a local demo app — no real trading occurs.
 
       localStorage.setItem('tradepilot_token', data.token);
       localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';
     } catch (err) {
       errorBox.textContent = 'Could not reach the server. Make sure it is running (npm start).';
       errorBox.classList.remove('hidden');
@@ -338,7 +338,7 @@ By signing up, you agree this is a local demo app — no real trading occurs.
       
       localStorage.setItem('tradepilot_token', data.token);
       localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
-      window.location.href = 'dashboard.html';
+      window.location.href = '/dashboard';
     } catch (err) {
       errorBox.textContent = err.message || 'Could not sign up with Google.';
       errorBox.classList.remove('hidden');
@@ -396,7 +396,7 @@ By signing up, you agree this is a local demo app — no real trading occurs.
           }
           localStorage.setItem('tradepilot_token', data.token);
           localStorage.setItem('tradepilot_user', JSON.stringify(data.user));
-          window.location.href = 'dashboard.html';
+          window.location.href = '/dashboard';
         } catch (err) {
           errorBox.textContent = err.message || 'Could not complete simulated Google signin.';
           errorBox.classList.remove('hidden');
