@@ -1,8 +1,21 @@
 (function () {
   const ALERTS_URL = '/api/alerts';
   let lastAlerts = [];
-  let lastHistory = [];
-  let lastInsights = null;
+  let activeCategoryFilter = null;
+  let editingAlertId = null;
+
+  // Shared per-type styling — used consistently across Alert Categories,
+  // Your Alerts cards, and Recent Triggers so the whole page reads as one design.
+  const TYPE_META = {
+    'Price Threshold': { icon: 'monetization_on', color: 'text-blue-600 bg-blue-50' },
+    'Volume Movement': { icon: 'bar_chart', color: 'text-purple-600 bg-purple-50' },
+    'News': { icon: 'newspaper', color: 'text-indigo-600 bg-indigo-50' },
+    'Filing': { icon: 'gavel', color: 'text-slate-600 bg-slate-100' },
+    'Sentiment Shift': { icon: 'psychology', color: 'text-amber-600 bg-amber-50' },
+    'Sector Impact': { icon: 'category', color: 'text-teal-600 bg-teal-50' },
+    'Portfolio Relevance': { icon: 'account_balance_wallet', color: 'text-emerald-600 bg-emerald-50' }
+  };
+  const PRIORITY_ORDER = { Critical: 0, High: 1, Medium: 2 };
 
   document.addEventListener('DOMContentLoaded', function () {
     const listEl = document.getElementById('your-alerts-list');
@@ -11,7 +24,9 @@
     const formSuccess = document.getElementById('alert-form-success');
     const saveBtn = document.getElementById('save-alert-btn');
     const modal = document.getElementById('new-alert-modal');
-    const exportBtn = document.getElementById('export-alerts-btn');
+    const modalTitle = document.getElementById('alert-modal-title');
+    const openCreateBtn = document.getElementById('open-create-alert-btn');
+    const refreshAllBtn = document.getElementById('refresh-all-btn');
 
     const symbolInput = document.getElementById('alert-symbol');
     const typeSelect = document.getElementById('alert-type');
@@ -28,8 +43,6 @@
 
     if (!listEl || !saveBtn) return; // not on this page
 
-    // Matches server MONITORED_TYPES — every type here has a real live data feed
-    // behind it, including Filing (SEC EDGAR).
     const MONITORED_TYPES = ['Price Threshold', 'Volume Movement', 'News', 'Filing', 'Sentiment Shift', 'Sector Impact', 'Portfolio Relevance'];
     const TYPES_REQUIRING_TARGET = ['Price Threshold', 'Volume Movement', 'Sentiment Shift', 'Sector Impact', 'Portfolio Relevance'];
 
@@ -91,20 +104,84 @@
       return 'border-l-outline-variant bg-white';
     }
 
+    function priorityBadge(priority) {
+      const cls = priority === 'Critical' ? 'bg-error-container text-on-error-container'
+        : priority === 'High' ? 'bg-secondary-container text-on-secondary-container'
+        : 'bg-surface-container text-on-surface-variant';
+      return `<span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${cls}">${priority}</span>`;
+    }
+
+    function openCreateModal() {
+      editingAlertId = null;
+      symbolInput.value = '';
+      targetPriceInput.value = '';
+      typeSelect.value = 'Price Threshold';
+      prioritySelect.value = 'Medium';
+      conditionSelect.value = 'above';
+      updateTypeUI();
+      if (modalTitle) modalTitle.textContent = 'Create Smart Alert';
+      if (saveBtn) saveBtn.textContent = 'Save Alert';
+      formError.classList.add('hidden');
+      modal.classList.remove('hidden');
+    }
+
+    function openEditModal(alert) {
+      editingAlertId = alert.id;
+      symbolInput.value = alert.symbol;
+      typeSelect.value = alert.alertType;
+      prioritySelect.value = alert.priority;
+      conditionSelect.value = alert.condition;
+      targetPriceInput.value = alert.targetPrice;
+      updateTypeUI();
+      if (modalTitle) modalTitle.textContent = `Edit Alert — $${alert.symbol}`;
+      if (saveBtn) saveBtn.textContent = 'Update Alert';
+      formError.classList.add('hidden');
+      modal.classList.remove('hidden');
+    }
+
+    if (openCreateBtn) openCreateBtn.addEventListener('click', openCreateModal);
+
     function renderAlerts(alerts) {
       listEl.querySelectorAll('.alert-card').forEach((el) => el.remove());
 
-      if (!alerts || alerts.length === 0) {
+      const filtered = activeCategoryFilter ? alerts.filter((a) => a.alertType === activeCategoryFilter) : alerts;
+      // Triggered first, then by priority (Critical > High > Medium), then most recent.
+      const sorted = [...filtered].sort((a, b) => {
+        if (a.status === 'triggered' && b.status !== 'triggered') return -1;
+        if (b.status === 'triggered' && a.status !== 'triggered') return 1;
+        const pa = PRIORITY_ORDER[a.priority] ?? 3;
+        const pb = PRIORITY_ORDER[b.priority] ?? 3;
+        if (pa !== pb) return pa - pb;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
+
+      const filterBadge = document.getElementById('alerts-filter-badge');
+      if (filterBadge) {
+        if (activeCategoryFilter) {
+          filterBadge.textContent = `Filtered: ${activeCategoryFilter} (clear)`;
+          filterBadge.classList.remove('hidden');
+          filterBadge.onclick = () => { activeCategoryFilter = null; renderAlerts(lastAlerts); renderCategoriesGrid(lastAlerts); };
+          filterBadge.classList.add('cursor-pointer', 'hover:underline');
+        } else {
+          filterBadge.classList.add('hidden');
+        }
+      }
+
+      if (!sorted.length) {
         emptyState.classList.remove('hidden');
+        emptyState.textContent = activeCategoryFilter
+          ? `No ${activeCategoryFilter} alerts yet.`
+          : `You don't have any alerts yet — click "Create New Alert" above to set one up.`;
         return;
       }
       emptyState.classList.add('hidden');
 
-      alerts.forEach((alert) => {
+      sorted.forEach((alert) => {
         const card = document.createElement('div');
         card.id = `alert-card-${alert.id}`;
         card.className = `alert-card bg-white border border-outline-variant/30 rounded-xl p-md shadow-sm border-l-4 ${priorityClasses(alert.priority)} flex flex-col md:flex-row md:items-center justify-between gap-sm`;
 
+        const meta = TYPE_META[alert.alertType] || { icon: 'notifications', color: 'text-on-surface-variant bg-surface-container' };
         const statusBadge = !alert.monitored
           ? '<span class="px-2 py-0.5 bg-outline-variant/30 text-on-surface-variant rounded text-label-sm font-label-sm">NOT MONITORED YET</span>'
           : alert.status === 'triggered'
@@ -118,13 +195,17 @@
           : `Saved for $${alert.symbol} — no live ${alert.alertType.toLowerCase()} data feed connected yet, so this isn't being actively checked.`;
 
         card.innerHTML = `
-          <div class="flex-1">
-            <div class="flex items-center gap-sm mb-1 flex-wrap">
-              ${statusBadge}
-              <h4 class="text-title-md font-title-md">$${alert.symbol}</h4>
-              <span class="text-label-sm text-on-surface-variant">${alert.alertType} · ${alert.priority}</span>
+          <div class="flex items-start gap-sm flex-1">
+            <span class="material-symbols-outlined p-2 rounded-lg shrink-0 ${meta.color}">${meta.icon}</span>
+            <div class="flex-1">
+              <div class="flex items-center gap-sm mb-1 flex-wrap">
+                ${statusBadge}
+                ${priorityBadge(alert.priority)}
+                <h4 class="text-title-md font-title-md">$${alert.symbol}</h4>
+                <span class="text-label-sm text-on-surface-variant">${alert.alertType}</span>
+              </div>
+              <p class="text-label-md text-on-surface-variant">${description}</p>
             </div>
-            <p class="text-label-md text-on-surface-variant">${description}</p>
           </div>
           <div class="flex md:flex-col items-end gap-xs shrink-0">
             ${alert.monitored ? `
@@ -132,16 +213,35 @@
               <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${dataBadgeClass}">${dataLabel}</span>
               <span>$${Number(alert.currentPrice).toFixed(2)}</span>
             </div>` : ''}
-            <button class="delete-alert-btn px-3 py-2 text-error border border-error/30 rounded-lg text-label-sm font-bold hover:bg-error hover:text-white transition-all" data-id="${alert.id}">
-              Delete
-            </button>
+            <div class="flex gap-xs">
+              <button class="edit-alert-btn px-3 py-2 text-primary border border-primary/30 rounded-lg text-label-sm font-bold hover:bg-primary hover:text-white transition-all" data-id="${alert.id}">
+                Edit
+              </button>
+              <button class="delete-alert-btn px-3 py-2 text-error border border-error/30 rounded-lg text-label-sm font-bold hover:bg-error hover:text-white transition-all" data-id="${alert.id}">
+                Delete
+              </button>
+            </div>
           </div>
         `;
         listEl.appendChild(card);
       });
 
       listEl.querySelectorAll('.delete-alert-btn').forEach((btn) => {
-        btn.addEventListener('click', () => deleteAlert(btn.getAttribute('data-id')));
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const a = lastAlerts.find((x) => String(x.id) === String(id));
+          const label = a ? `$${a.symbol} (${a.alertType})` : 'this alert';
+          if (confirm(`Delete ${label}? This can't be undone.`)) {
+            deleteAlert(id);
+          }
+        });
+      });
+      listEl.querySelectorAll('.edit-alert-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const a = lastAlerts.find((x) => String(x.id) === String(id));
+          if (a) openEditModal(a);
+        });
       });
     }
 
@@ -153,7 +253,6 @@
           lastAlerts = data.alerts || [];
           renderAlerts(lastAlerts);
           renderDataBadge(lastAlerts);
-          renderUrgentActionCenter(lastAlerts);
           renderCategoriesGrid(lastAlerts);
         }
       } catch (err) {
@@ -169,69 +268,44 @@
       badge.textContent = anySimulated ? 'Some prices simulated (live feed unavailable)' : 'Live prices';
     }
 
-    function renderUrgentActionCenter(alerts) {
+    // ---------- Urgent Action Center: automatic, real, from actual holdings ----------
+    async function loadPortfolioSignals() {
       const el = document.getElementById('urgent-action-center');
       if (!el) return;
+      try {
+        const res = await fetch('/api/alerts/portfolio-signals', { headers: authHeaders() });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error);
 
-      // Urgent = already triggered, or active + Critical/High priority close to firing.
-      // "Close to firing" only makes sense as a $ distance for Price Threshold —
-      // other types (Volume, Sector, Portfolio, Sentiment) use targetPrice for a
-      // different unit entirely, so proximity isn't computed for those; they only
-      // qualify once actually triggered.
-      const urgent = alerts.filter((a) => {
-        if (!a.monitored) return false;
-        if (a.status === 'triggered') return true;
-        if (a.priority !== 'Critical' && a.priority !== 'High') return false;
-        if (a.alertType !== 'Price Threshold') return false;
-        const target = Number(a.targetPrice);
-        const distancePercent = Math.abs((a.currentPrice - target) / target) * 100;
-        return distancePercent <= 3;
-      }).sort((a, b) => {
-        // Triggered alerts first, most recently triggered first; then approaching-target ones.
-        if (a.status === 'triggered' && b.status !== 'triggered') return -1;
-        if (b.status === 'triggered' && a.status !== 'triggered') return 1;
-        if (a.status === 'triggered' && b.status === 'triggered') {
-          return new Date(b.triggeredAt) - new Date(a.triggeredAt);
+        if (!data.hasHoldings) {
+          el.innerHTML = '<p class="text-label-sm text-on-surface-variant col-span-full">Add holdings on your Portfolio page to see automatic signals here.</p>';
+          return;
         }
-        return 0;
-      }).slice(0, 5);
+        if (!data.signals.length) {
+          el.innerHTML = '<p class="text-label-sm text-on-surface-variant col-span-full">Nothing notable in your holdings right now.</p>';
+          return;
+        }
 
-      if (!urgent.length) {
-        el.innerHTML = '<p class="text-label-sm text-on-surface-variant">Nothing urgent right now.</p>';
-        return;
+        el.innerHTML = data.signals.map((s) => {
+          const isNotable = s.severity !== 'Mild';
+          const isCritical = s.severity === 'Critical';
+          const bg = isCritical ? 'bg-error-container/20 border-error/20' : isNotable ? 'bg-secondary-container/20 border-secondary/20' : 'bg-surface-container-low border-outline-variant/20';
+          const iconBg = isCritical ? 'bg-error-container' : isNotable ? 'bg-secondary-container' : 'bg-surface-container';
+          const iconColor = isCritical ? 'text-error' : isNotable ? 'text-secondary' : 'text-on-surface-variant';
+          const icon = s.changePercent >= 0 ? 'trending_up' : 'trending_down';
+          return `<div class="${bg} border rounded-20px p-md flex items-center gap-md">
+            <div class="w-12 h-12 ${iconBg} rounded-full flex items-center justify-center flex-shrink-0">
+              <span class="material-symbols-outlined ${iconColor}">${icon}</span>
+            </div>
+            <div class="flex-1">
+              <h4 class="text-label-md font-bold text-on-surface">$${s.symbol} · ${s.severity}${s.simulated ? ' · simulated' : ''}</h4>
+              <p class="text-[12px] text-on-surface-variant">${s.note}</p>
+            </div>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        el.innerHTML = '<p class="text-label-sm text-error col-span-full">Could not load portfolio signals.</p>';
       }
-
-      el.innerHTML = urgent.map((a) => {
-        const isTriggered = a.status === 'triggered';
-        const bg = isTriggered ? 'bg-error-container/20 border-error/20' : 'bg-secondary-container/20 border-secondary/20';
-        const iconBg = isTriggered ? 'bg-error-container' : 'bg-secondary-container';
-        const iconColor = isTriggered ? 'text-error' : 'text-secondary';
-        const icon = isTriggered ? 'priority_high' : 'trending_up';
-        const label = isTriggered
-          ? `Triggered — price went ${a.condition} $${Number(a.targetPrice).toFixed(2)}`
-          : `Within 3% of $${Number(a.targetPrice).toFixed(2)} target`;
-        return `<div class="${bg} border rounded-20px p-md flex items-center gap-md">
-          <div class="w-12 h-12 ${iconBg} rounded-full flex items-center justify-center flex-shrink-0">
-            <span class="material-symbols-outlined ${iconColor}">${icon}</span>
-          </div>
-          <div class="flex-1">
-            <h4 class="text-label-md font-bold text-on-surface">$${a.symbol} ${isTriggered ? 'Triggered' : 'Approaching Target'}</h4>
-            <p class="text-[12px] text-on-surface-variant">${label}</p>
-          </div>
-          <button class="view-alert-btn px-4 py-2 bg-primary text-white text-label-sm font-bold rounded-lg shadow-sm hover:opacity-90" data-id="${a.id}">View</button>
-        </div>`;
-      }).join('');
-
-      el.querySelectorAll('.view-alert-btn').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const card = document.getElementById(`alert-card-${btn.getAttribute('data-id')}`);
-          if (card) {
-            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            card.style.outline = '2px solid var(--md-sys-color-primary, #4f46e5)';
-            setTimeout(() => { card.style.outline = ''; }, 2000);
-          }
-        });
-      });
     }
 
     function renderCategoriesGrid(alerts) {
@@ -239,26 +313,41 @@
       if (!el) return;
 
       const categories = [
-        { type: 'Price Threshold', label: 'Price Targets', icon: 'monetization_on', desc: 'Specific price thresholds and breakouts.' },
-        { type: 'Volume Movement', label: 'Volume Spikes', icon: 'bar_chart', desc: 'Unusual trading volume vs. average.' },
-        { type: 'News', label: 'News Impact', icon: 'newspaper', desc: 'Real-time alerts for new articles.' },
-        { type: 'Filing', label: 'SEC Filings', icon: 'gavel', desc: 'New 10-K, 10-Q, 8-K filings.' },
-        { type: 'Sentiment Shift', label: 'Keyword Sentiment', icon: 'psychology', desc: 'Heuristic score from real headlines.' },
-        { type: 'Sector Impact', label: 'Sector Impact', icon: 'category', desc: "Moves in this stock's sector ETF." },
-        { type: 'Portfolio Relevance', label: 'Portfolio Relevance', icon: 'account_balance_wallet', desc: 'Moves on symbols you actually hold.' }
+        { type: 'Price Threshold', label: 'Price Targets', desc: 'Specific price thresholds and breakouts.' },
+        { type: 'Volume Movement', label: 'Volume Spikes', desc: 'Unusual trading volume vs. average.' },
+        { type: 'News', label: 'News Impact', desc: 'Real-time alerts for new articles.' },
+        { type: 'Filing', label: 'SEC Filings', desc: 'New 10-K, 10-Q, 8-K filings.' },
+        { type: 'Sentiment Shift', label: 'Keyword Sentiment', desc: 'Heuristic score from real headlines.' },
+        { type: 'Sector Impact', label: 'Sector Impact', desc: "Moves in this stock's sector ETF." },
+        { type: 'Portfolio Relevance', label: 'Portfolio Relevance', desc: 'Moves on symbols you actually hold.' }
       ];
 
       el.innerHTML = categories.map((c) => {
+        const meta = TYPE_META[c.type];
         const count = alerts.filter((a) => a.alertType === c.type).length;
-        return `<div class="p-md bg-white border border-outline-variant/30 rounded-20px shadow-sm">
+        const isActive = activeCategoryFilter === c.type;
+        return `<button data-type="${c.type}" class="category-filter-btn text-left p-md rounded-20px shadow-sm transition-all cursor-pointer relative overflow-hidden ${isActive ? 'bg-primary text-white shadow-lg scale-[1.02]' : 'bg-white border border-outline-variant/30 hover:border-primary/40 hover:shadow-md hover:-translate-y-0.5'}">
+          ${isActive ? '<span class="material-symbols-outlined absolute top-2 right-2 text-[18px]">check_circle</span>' : ''}
           <div class="flex justify-between items-start mb-xs">
-            <span class="material-symbols-outlined text-primary p-2 bg-surface-container rounded-lg">${c.icon}</span>
-            <span class="text-label-sm font-label-sm text-on-surface-variant">${count} of your alerts</span>
+            <span class="material-symbols-outlined p-2 rounded-lg ${isActive ? 'bg-white/20 text-white' : meta.color}">${meta.icon}</span>
+            ${!isActive ? `<span class="text-label-sm font-label-sm text-on-surface-variant">${count} of your alerts</span>` : ''}
           </div>
-          <h3 class="text-label-md font-bold text-on-surface">${c.label}</h3>
-          <p class="text-label-sm text-on-surface-variant mt-1">${c.desc}</p>
-        </div>`;
+          <h3 class="text-label-md font-bold ${isActive ? 'text-white' : 'text-on-surface'}">${c.label}</h3>
+          <p class="text-label-sm mt-1 ${isActive ? 'text-white/80' : 'text-on-surface-variant'}">${isActive ? `${count} of your alerts — click to clear` : c.desc}</p>
+        </button>`;
       }).join('');
+
+      el.querySelectorAll('.category-filter-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const type = btn.getAttribute('data-type');
+          activeCategoryFilter = activeCategoryFilter === type ? null : type;
+          renderAlerts(lastAlerts);
+          renderCategoriesGrid(lastAlerts);
+          if (activeCategoryFilter) {
+            document.getElementById('your-alerts-list').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
     }
 
     async function loadRecentTriggers() {
@@ -268,7 +357,6 @@
         const res = await fetch('/api/alerts/history', { headers: authHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        lastHistory = data.history;
 
         if (!data.history.length) {
           el.innerHTML = '<p class="text-label-sm text-on-surface-variant p-md bg-surface-container-low rounded-xl border border-outline-variant/20">No alerts have triggered yet.</p>';
@@ -276,18 +364,21 @@
         }
 
         el.innerHTML = data.history.map((h) => {
+          const meta = TYPE_META[h.alertType] || { icon: 'notifications', color: 'text-on-surface-variant bg-surface-container' };
           const priorityClass = h.priority === 'Critical' ? 'border-l-error' : h.priority === 'High' ? 'border-l-secondary' : 'border-l-outline-variant';
-          const badgeClass = h.priority === 'Critical' ? 'bg-error-container text-on-error-container' : h.priority === 'High' ? 'bg-secondary-container text-on-secondary-container' : 'bg-surface-container text-on-surface-variant';
           const when = new Date(h.triggeredAt);
           const minsAgo = Math.max(1, Math.round((Date.now() - when.getTime()) / 60000));
           const timeLabel = minsAgo < 60 ? `${minsAgo} mins ago` : minsAgo < 1440 ? `${Math.round(minsAgo / 60)} hr ago` : when.toLocaleDateString();
-          return `<div class="bg-white border border-outline-variant/30 rounded-20px p-md shadow-sm border-l-4 ${priorityClass}">
-            <div class="flex items-center gap-sm mb-xs flex-wrap">
-              <span class="px-2 py-0.5 ${badgeClass} rounded text-label-sm font-label-sm">${h.priority.toUpperCase()}</span>
-              <span class="text-label-sm text-on-surface-variant">${timeLabel}</span>
-              <h4 class="text-title-md font-title-md">$${h.symbol}</h4>
+          return `<div class="bg-white border border-outline-variant/30 rounded-20px p-md shadow-sm border-l-4 ${priorityClass} flex items-start gap-md">
+            <span class="material-symbols-outlined p-2 rounded-lg shrink-0 ${meta.color}">${meta.icon}</span>
+            <div class="flex-1">
+              <div class="flex items-center gap-sm mb-xs flex-wrap">
+                ${priorityBadge(h.priority)}
+                <span class="text-label-sm text-on-surface-variant">${timeLabel}</span>
+                <h4 class="text-title-md font-title-md">$${h.symbol}</h4>
+              </div>
+              <p class="text-body-md text-on-surface-variant">Price went <b>${h.condition}</b> the $${Number(h.targetPrice).toFixed(2)} target — actual price at trigger was <b>$${Number(h.priceAtTrigger).toFixed(2)}</b>.</p>
             </div>
-            <p class="text-body-md text-on-surface-variant">Price went <b>${h.condition}</b> the $${Number(h.targetPrice).toFixed(2)} target — actual price at trigger was <b>$${Number(h.priceAtTrigger).toFixed(2)}</b>.</p>
           </div>`;
         }).join('');
       } catch (err) {
@@ -295,136 +386,75 @@
       }
     }
 
+    // ---------- Unified Insights row (was: separate Signal Accuracy + Alert Insights) ----------
     async function loadInsights() {
-      const accuracyEl = document.getElementById('signal-accuracy-display');
-      const insightsEl = document.getElementById('alert-insights-list');
-      if (!accuracyEl && !insightsEl) return;
+      const gridEl = document.getElementById('alert-insights-grid');
+      if (!gridEl) return;
       try {
         const res = await fetch('/api/alerts/insights', { headers: authHeaders() });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error);
-        lastInsights = data;
-        if (accuracyEl) {
-          if (data.signalAccuracy === null) {
-            accuracyEl.innerHTML = `<p class="text-label-sm text-on-surface-variant text-center px-md">Not enough trigger history yet to measure signal accuracy.<br>This fills in once your alerts have triggered and had at least an hour to play out.</p>`;
-          } else {
-            accuracyEl.innerHTML = `<div class="text-center">
-              <p class="text-display-lg font-bold text-primary">${data.signalAccuracy}%</p>
-              <p class="text-label-sm text-on-surface-variant mt-xs">of ${data.signalSampleSize} triggered alert${data.signalSampleSize === 1 ? '' : 's'} still held direction 1+ hour later</p>
-            </div>`;
-          }
-        }
 
-        if (insightsEl) {
-          insightsEl.innerHTML = `
-            <div class="flex items-center justify-between p-sm bg-surface-container-low rounded-xl">
-              <span class="text-label-md">Most Active Asset</span>
-              <span class="font-bold">${data.mostActiveSymbol ? '$' + data.mostActiveSymbol : '—'}</span>
+        const reliabilityValue = data.signalAccuracy === null ? '—' : `${data.signalAccuracy}%`;
+        const reliabilitySub = data.signalAccuracy === null
+          ? 'Not enough data yet'
+          : `of ${data.signalSampleSize} held direction 1+ hr later`;
+
+        const tiles = [
+          {
+            label: 'Alert Reliability', value: reliabilityValue, sub: reliabilitySub,
+            icon: 'verified', accent: 'text-emerald-600 bg-emerald-50',
+            info: "When one of your alerts fires, does the price usually keep moving that direction afterward, or reverse? This checks each triggered alert again 1+ hour later. Higher = your alerts have been good signals so far. It fills in as you get more triggers with time to play out — it's not a prediction, just a look back at how your past alerts held up."
+          },
+          {
+            label: 'Most Active Asset', value: data.mostActiveSymbol ? '$' + data.mostActiveSymbol : '—', sub: 'Most triggers',
+            icon: 'bolt', accent: 'text-amber-600 bg-amber-50'
+          },
+          {
+            label: 'Avg Time to Trigger', value: data.avgTimeToTriggerHours != null ? data.avgTimeToTriggerHours + ' hrs' : '—', sub: 'Creation to firing',
+            icon: 'schedule', accent: 'text-blue-600 bg-blue-50',
+            info: "The average gap between when you created an alert and when it actually fired. A low number often just means you set an easy-to-hit target, not that something is 'fast' or 'slow' in a meaningful sense."
+          },
+          {
+            label: 'Total Triggers', value: String(data.totalTriggers), sub: 'All time',
+            icon: 'notifications_active', accent: 'text-primary bg-primary-container/30'
+          }
+        ];
+
+        gridEl.innerHTML = tiles.map((t) => `
+          <div class="bg-white border border-outline-variant/30 rounded-20px p-md relative">
+            <div class="flex items-start justify-between mb-sm">
+              <span class="material-symbols-outlined p-2 rounded-lg ${t.accent}">${t.icon}</span>
+              ${t.info ? `<button class="insight-info-btn text-on-surface-variant hover:text-primary transition-colors rounded-full p-1 hover:bg-surface-container-low" data-label="${t.label}" data-info="${t.info.replace(/"/g, '&quot;')}">
+                <span class="material-symbols-outlined text-[18px]">info</span>
+              </button>` : ''}
             </div>
-            <div class="flex items-center justify-between p-sm bg-surface-container-low rounded-xl">
-              <span class="text-label-md">Avg Time to Trigger</span>
-              <span class="font-bold">${data.avgTimeToTriggerHours != null ? data.avgTimeToTriggerHours + ' hrs' : '—'}</span>
-            </div>
-            <div class="flex items-center justify-between p-sm bg-surface-container-low rounded-xl">
-              <span class="text-label-md">Total Triggers</span>
-              <span class="font-bold">${data.totalTriggers}</span>
-            </div>`;
+            <p class="text-label-sm text-on-surface-variant">${t.label}</p>
+            <p class="text-title-lg font-bold">${t.value}</p>
+            <p class="text-[11px] text-on-surface-variant mt-xs">${t.sub}</p>
+          </div>`).join('');
+
+        gridEl.querySelectorAll('.insight-info-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const modal = document.getElementById('insight-info-modal');
+            const titleEl = document.getElementById('insight-info-modal-title');
+            const textEl = document.getElementById('insight-info-modal-text');
+            if (modal && titleEl && textEl) {
+              titleEl.textContent = btn.getAttribute('data-label');
+              textEl.textContent = btn.getAttribute('data-info');
+              modal.classList.remove('hidden');
+            }
+          });
+        });
+        const infoModal = document.getElementById('insight-info-modal');
+        if (infoModal) {
+          infoModal.addEventListener('click', (e) => {
+            if (e.target === infoModal) infoModal.classList.add('hidden');
+          });
         }
       } catch (err) {
-        if (accuracyEl) accuracyEl.innerHTML = '<p class="text-label-sm text-error">Could not load insights.</p>';
-        if (insightsEl) insightsEl.innerHTML = '<p class="text-label-sm text-error">Could not load insights.</p>';
+        gridEl.innerHTML = '<p class="text-label-sm text-error col-span-full">Could not load insights.</p>';
       }
-    }
-
-    function exportPdf() {
-      if (!window.jspdf) {
-        formError.textContent = 'PDF export library did not load. Check your internet connection and try again.';
-        formError.classList.remove('hidden');
-        return;
-      }
-      if (!lastAlerts.length) {
-        formError.textContent = 'No alerts to export yet.';
-        formError.classList.remove('hidden');
-        return;
-      }
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-      const margin = 48;
-      const maxWidth = doc.internal.pageSize.getWidth() - margin * 2;
-      let y = margin;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(18);
-      doc.text('TradePilot — Smart Alerts', margin, y);
-      y += 20;
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(9);
-      doc.setTextColor(120);
-      doc.text(`Exported ${new Date().toLocaleString()}`, margin, y);
-      doc.setTextColor(0);
-      y += 26;
-
-      lastAlerts.forEach((alert, i) => {
-        if (y > 740) {
-          doc.addPage();
-          y = margin;
-        }
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(12);
-        doc.text(`${i + 1}. $${alert.symbol} — ${alert.alertType} (${alert.priority})`, margin, y);
-        y += 15;
-
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        const status = alert.status === 'triggered' ? 'TRIGGERED' : alert.monitored ? 'ACTIVE' : 'NOT MONITORED';
-        const dataLabel = alert.simulated ? 'simulated' : 'live';
-        const line = alert.monitored
-          ? `Status: ${status} · ${alert.displayValue || ''} (${dataLabel} data, stock price: $${Number(alert.currentPrice).toFixed(2)})`
-          : `Status: ${status} · No live data feed connected for this alert type yet`;
-        const lines = doc.splitTextToSize(line, maxWidth);
-        doc.text(lines, margin, y);
-        y += lines.length * 13 + 12;
-      });
-
-      if (lastHistory.length) {
-        if (y > 700) { doc.addPage(); y = margin; }
-        y += 10;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text('Recent Trigger History', margin, y);
-        y += 18;
-        lastHistory.forEach((h) => {
-          if (y > 740) { doc.addPage(); y = margin; }
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(10);
-          const line = `$${h.symbol} — went ${h.condition} $${Number(h.targetPrice).toFixed(2)} (actual: $${Number(h.priceAtTrigger).toFixed(2)}) at ${new Date(h.triggeredAt).toLocaleString()}`;
-          const lines = doc.splitTextToSize(line, maxWidth);
-          doc.text(lines, margin, y);
-          y += lines.length * 13 + 8;
-        });
-      }
-
-      if (lastInsights) {
-        if (y > 700) { doc.addPage(); y = margin; }
-        y += 10;
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.text('Alert Insights', margin, y);
-        y += 18;
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
-        const insightsLine = `Most active: ${lastInsights.mostActiveSymbol ? '$' + lastInsights.mostActiveSymbol : '—'} · Avg time to trigger: ${lastInsights.avgTimeToTriggerHours != null ? lastInsights.avgTimeToTriggerHours + ' hrs' : '—'} · Total triggers: ${lastInsights.totalTriggers} · Signal accuracy: ${lastInsights.signalAccuracy != null ? lastInsights.signalAccuracy + '%' : 'not enough data yet'}`;
-        const insightsLines = doc.splitTextToSize(insightsLine, maxWidth);
-        doc.text(insightsLines, margin, y);
-        y += insightsLines.length * 13 + 12;
-      }
-
-      doc.setFontSize(8);
-      doc.setTextColor(140);
-      doc.text('Educational/informational content only — not financial advice. Generated by TradePilot.', margin, 800);
-
-      doc.save(`tradepilot-alerts-${new Date().toISOString().slice(0, 10)}.pdf`);
     }
 
     async function deleteAlert(id) {
@@ -436,7 +466,7 @@
       }
     }
 
-    async function createAlert() {
+    async function saveAlert() {
       formError.classList.add('hidden');
       formSuccess.classList.add('hidden');
 
@@ -449,41 +479,57 @@
         targetPrice: requiresTarget ? targetPriceInput.value : '0.01'
       };
 
+      const isEditing = !!editingAlertId;
       saveBtn.disabled = true;
-      saveBtn.textContent = 'Saving...';
+      saveBtn.textContent = isEditing ? 'Updating...' : 'Saving...';
 
       try {
-        const res = await fetch(ALERTS_URL, {
-          method: 'POST',
+        const res = await fetch(isEditing ? `${ALERTS_URL}/${editingAlertId}` : ALERTS_URL, {
+          method: isEditing ? 'PUT' : 'POST',
           headers: authHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify(payload)
         });
         const data = await res.json();
 
         if (!res.ok) {
-          formError.textContent = data.error || 'Could not create alert.';
+          formError.textContent = data.error || `Could not ${isEditing ? 'update' : 'create'} alert.`;
           formError.classList.remove('hidden');
           return;
         }
 
-        symbolInput.value = '';
-        targetPriceInput.value = '';
         modal.classList.add('hidden');
-        formSuccess.textContent = `Alert created for $${data.alert.symbol}.`;
+        formSuccess.textContent = isEditing ? `Alert updated for $${data.alert.symbol}.` : `Alert created for $${data.alert.symbol}.`;
         formSuccess.classList.remove('hidden');
+        editingAlertId = null;
         loadAlerts();
       } catch (err) {
         formError.textContent = 'Could not reach the server. Make sure it is running (npm start).';
         formError.classList.remove('hidden');
       } finally {
         saveBtn.disabled = false;
-        saveBtn.textContent = 'Save Alert';
+        saveBtn.textContent = isEditing ? 'Update Alert' : 'Save Alert';
       }
     }
 
-    saveBtn.addEventListener('click', createAlert);
-    if (exportBtn) exportBtn.addEventListener('click', exportPdf);
+    function refreshEverything() {
+      loadAlerts();
+      loadPortfolioSignals();
+      loadRecentTriggers();
+      loadInsights();
+      if (refreshAllBtn) {
+        const icon = refreshAllBtn.querySelector('.material-symbols-outlined');
+        if (icon) {
+          icon.classList.add('animate-spin');
+          setTimeout(() => icon.classList.remove('animate-spin'), 600);
+        }
+      }
+    }
+
+    saveBtn.addEventListener('click', saveAlert);
+    if (refreshAllBtn) refreshAllBtn.addEventListener('click', refreshEverything);
+
     loadAlerts();
+    loadPortfolioSignals();
     loadRecentTriggers();
     loadInsights();
   });

@@ -225,6 +225,22 @@ module.exports = {
     );
   },
 
+  // Editing an alert resets it to 'active' with no trigger history, since the
+  // thing being monitored has changed — a stale "triggered" status from before
+  // the edit wouldn't mean anything about the new condition.
+  async updateAlert(userId, alertId, { symbol, alertType, priority, condition, targetPrice }) {
+    const { rows } = await pool.query(
+      `UPDATE alerts
+       SET symbol = $1, alert_type = $2, priority = $3, condition = $4, target_price = $5,
+           status = 'active', last_checked_price = NULL, triggered_at = NULL
+       WHERE id = $6 AND user_id = $7
+       RETURNING id, symbol, alert_type AS "alertType", priority, condition,
+                 target_price AS "targetPrice", status, created_at AS "createdAt"`,
+      [symbol, alertType, priority, condition, targetPrice, alertId, userId]
+    );
+    return rows[0] || null;
+  },
+
   async deleteAlert(userId, alertId) {
     const { rowCount } = await pool.query(
       `DELETE FROM alerts WHERE id = $1 AND user_id = $2`,

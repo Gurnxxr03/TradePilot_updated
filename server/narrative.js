@@ -25,7 +25,7 @@ async function getQuoteWithFallback(symbol) {
 // financial-impact panel are computed live from Yahoo Finance quotes; nothing here is invented.
 router.get('/snapshot', requireAuth, async (req, res) => {
   try {
-    const [sectorResults, universeResults, holdings] = await Promise.all([
+    const [sectorResults, universeResults, holdings, watchlist] = await Promise.all([
       Promise.all(SECTOR_ETFS.map(async (s) => {
         try {
           const q = await getRealQuote(s.symbol);
@@ -43,7 +43,8 @@ router.get('/snapshot', requireAuth, async (req, res) => {
           return { symbol, name, changePercent: mq.changePercent, price: mq.price, simulated: true };
         }
       })),
-      db.listHoldings(req.user.id)
+      db.listHoldings(req.user.id),
+      db.listWatchlist(req.user.id)
     ]);
 
     // Sector performance (real, from sector ETFs)
@@ -80,7 +81,6 @@ router.get('/snapshot', requireAuth, async (req, res) => {
       const totalDollarChange = Math.round(enrichedHoldings.reduce((sum, h) => sum + h.dollarChange, 0) * 100) / 100;
       const movers = enrichedHoldings
         .sort((a, b) => Math.abs(b.dollarChange) - Math.abs(a.dollarChange))
-        .slice(0, 3)
         .map((h) => ({
           symbol: h.symbol,
           dollarChange: h.dollarChange,
@@ -94,24 +94,39 @@ router.get('/snapshot', requireAuth, async (req, res) => {
       };
     }
 
-    // Narrative feed (real recent news, from the user's own symbols where possible, else broad market)
-    const newsSymbols = holdings.length > 0
-      ? [...new Set(holdings.map((h) => h.symbol.trim().toUpperCase()))].slice(0, 3)
-      : ['SPY', 'QQQ'];
+    // Narrative feed (real recent news, from the user's own symbols where possible, else broad
+    // market) — pulls a wider pool covering the full trading day, not just a handful of headlines.
+    const newsSymbols = [...new Set([
+      ...holdings.map((h) => h.symbol.trim().toUpperCase()),
+      ...watchlist.map((w) => w.symbol.trim().toUpperCase())
+    ])].slice(0, 8);
+    const newsFallbackUsed = newsSymbols.length === 0;
+    if (newsFallbackUsed) newsSymbols.push('SPY', 'QQQ');
+    if (process.env.DEBUG_NEWS_SYMBOLS) {
+      console.log(`[DEBUG] news pool symbols for user ${req.user.id}:`, newsSymbols, 'fallback used:', newsFallbackUsed);
+    }
     const newsResults = await Promise.all(
       newsSymbols.map(async (s) => {
         try {
-          return await getNews(s, 2);
+          const items = await getNews(s, 6);
+          if (process.env.DEBUG_NEWS_SYMBOLS) {
+            console.log(`[DEBUG] ${s}: ${items.length} article(s) returned`);
+          }
+          return items;
         } catch (err) {
+          if (process.env.DEBUG_NEWS_SYMBOLS) {
+            console.log(`[DEBUG] ${s}: getNews failed —`, err.message);
+          }
           return [];
         }
       })
     );
+    const twentyFourHoursAgo = Date.now() - 24 * 60 * 60 * 1000;
     const narrativeFeed = newsResults
       .flat()
-      .filter((n) => n.publishedAt)
+      .filter((n) => n.publishedAt && n.publishedAt >= twentyFourHoursAgo)
       .sort((a, b) => b.publishedAt - a.publishedAt)
-      .slice(0, 6);
+      .slice(0, 30);
 
     res.json({
       sectorPerformance,
@@ -188,20 +203,24 @@ router.post('/', requireAuth, async (req, res) => {
       .map(([s, news]) => `${s}: ${news.map((n) => `"${n.title}" (${n.publisher})`).join('; ')}`)
       .join(' | ') || 'no recent symbol-specific news retrieved';
 
-    const systemPrompt = `You are a financial news summarizer for a trading education app called TradePilot.
+    const systemPrompt = `You are writing "Market Pulse" — a beginner-friendly, whole-day market summary for a trading
+education app called TradePilot. Your reader may be a complete newcomer to investing. Write in plain, simple,
+everyday language — avoid jargon where possible, and when you must use a financial term, explain it in the same
+sentence. Sound like a knowledgeable friend explaining the day's market simply, not a Bloomberg terminal.
+
 You will be given REAL, live data: current quotes and real recent news headlines for the user's tracked
-symbols. Generate today's personalized market story using ONLY the facts provided below — do not invent
+symbols. Generate a summary of the WHOLE trading day so far using ONLY the facts provided below — do not invent
 prices, percentages, or headlines that are not in the data given to you. If a data point is marked
 SIMULATED, you may mention the price as an estimate but do not present it as a live market fact.
 ${COMPLIANCE_INSTRUCTION}
 
 Respond ONLY with valid JSON (no markdown fences, no preamble), matching exactly this shape:
 {
-  "marketOverview": "2-3 sentences: summarize the overall tone across the user's tracked symbols today, based on the real quote data given",
-  "sectorMovement": "1-2 sentences: which sector(s) among the user's holdings/watchlist moved and by how much, using the real change percentages given",
-  "companyNews": "1-2 sentences: summarize one real, specific news headline from the news data given, naming the source",
-  "watchlistEvents": "1-3 sentences: something notable today specifically about the user's watchlist symbols, grounded in the real quote/news data. If they have none, gently note that and suggest adding some.",
-  "portfolioRelevance": "1-3 sentences: how today's real price movement connects to the user's actual holdings and gain/loss. If they have none, gently note that and suggest tracking a position on the Dashboard.",
+  "marketOverview": "2-3 simple sentences: summarize how today has gone so far across the user's tracked symbols, in plain beginner-friendly language, based on the real quote data given",
+  "sectorMovement": "1-2 simple sentences: which sector(s) among the user's holdings/watchlist moved and by how much today, using the real change percentages given — explain what a 'sector' is briefly if it helps",
+  "companyNews": "1-2 simple sentences: summarize one real, specific news headline from the news data given, naming the source, in plain language a beginner would understand",
+  "watchlistEvents": "1-3 simple sentences: something notable today specifically about the user's watchlist symbols, grounded in the real quote/news data. If they have none, gently note that and suggest adding some.",
+  "portfolioRelevance": "1-3 simple sentences: how today's real price movement connects to the user's actual holdings and gain/loss, in plain language. If they have none, gently note that and suggest tracking a position on the Dashboard.",
   "plainLanguageExplanation": "1 short sentence defining one relevant finance term simply, format: \\"'Term' means ...\\""
 }`;
 
