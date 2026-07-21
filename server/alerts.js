@@ -2,7 +2,7 @@ const express = require('express');
 const db = require('./db');
 const { requireAuth } = require('./auth');
 const { getRealQuote, getNews, getFundamentals } = require('./yahoo-finance');
-const { getMockPrice, getSectorForSymbol } = require('./mock-market');
+const { getMockPrice, getMockQuote, getSectorForSymbol } = require('./mock-market');
 const { getSectorEtfFor } = require('./sector-etfs');
 const { getRecentFilings } = require('./sec-edgar');
 
@@ -282,34 +282,42 @@ router.get('/', requireAuth, async (req, res) => {
 });
 
 // POST /api/alerts — create a new alert
+// Shared validation for create + edit — returns { error } or { resolvedType, condToSave, priceToSave, isMonitoredType }
+function validateAlertInput({ symbol, alertType, condition, targetPrice }) {
+  if (!isValidSymbol(symbol)) {
+    return { error: 'Please enter a valid stock symbol (e.g. AAPL, TSLA, NVDA).' };
+  }
+  if (alertType && !VALID_ALERT_TYPES.includes(alertType)) {
+    return { error: 'Invalid alert type.' };
+  }
+  const resolvedType = alertType || 'Price Threshold';
+  const isMonitoredType = MONITORED_TYPES.includes(resolvedType);
+  const requiresTarget = TYPES_REQUIRING_TARGET.includes(resolvedType);
+
+  let condToSave = 'above';
+  let priceToSave = 0.01;
+
+  if (requiresTarget) {
+    if (!VALID_CONDITIONS.includes(condition)) {
+      return { error: 'Condition must be "above" or "below".' };
+    }
+    const price = Number(targetPrice);
+    if (!targetPrice || isNaN(price) || price <= 0) {
+      return { error: 'Please enter a valid target value.' };
+    }
+    condToSave = condition;
+    priceToSave = price;
+  }
+
+  return { resolvedType, condToSave, priceToSave, isMonitoredType };
+}
+
 router.post('/', requireAuth, async (req, res) => {
   try {
     const { symbol, alertType, priority, condition, targetPrice } = req.body;
-
-    if (!isValidSymbol(symbol)) {
-      return res.status(400).json({ error: 'Please enter a valid stock symbol (e.g. AAPL, TSLA, NVDA).' });
-    }
-    if (alertType && !VALID_ALERT_TYPES.includes(alertType)) {
-      return res.status(400).json({ error: 'Invalid alert type.' });
-    }
-    const resolvedType = alertType || 'Price Threshold';
-    const isMonitoredType = MONITORED_TYPES.includes(resolvedType);
-    const requiresTarget = TYPES_REQUIRING_TARGET.includes(resolvedType);
-
-    let condToSave = 'above';
-    let priceToSave = 0.01;
-
-    if (requiresTarget) {
-      if (!VALID_CONDITIONS.includes(condition)) {
-        return res.status(400).json({ error: 'Condition must be "above" or "below".' });
-      }
-      const price = Number(targetPrice);
-      if (!targetPrice || isNaN(price) || price <= 0) {
-        return res.status(400).json({ error: 'Please enter a valid target value.' });
-      }
-      condToSave = condition;
-      priceToSave = price;
-    }
+    const validated = validateAlertInput({ symbol, alertType, condition, targetPrice });
+    if (validated.error) return res.status(400).json({ error: validated.error });
+    const { resolvedType, condToSave, priceToSave, isMonitoredType } = validated;
 
     const alert = await db.createAlert(req.user.id, {
       symbol: symbol.trim().toUpperCase(),
@@ -324,6 +332,34 @@ router.post('/', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Create alert error:', err);
     res.status(500).json({ error: 'Could not create alert.' });
+  }
+});
+
+// PUT /api/alerts/:id — edit an existing alert (only your own)
+router.put('/:id', requireAuth, async (req, res) => {
+  try {
+    const { symbol, alertType, priority, condition, targetPrice } = req.body;
+    const validated = validateAlertInput({ symbol, alertType, condition, targetPrice });
+    if (validated.error) return res.status(400).json({ error: validated.error });
+    const { resolvedType, condToSave, priceToSave, isMonitoredType } = validated;
+
+    const alert = await db.updateAlert(req.user.id, req.params.id, {
+      symbol: symbol.trim().toUpperCase(),
+      alertType: resolvedType,
+      priority: priority || 'Medium',
+      condition: condToSave,
+      targetPrice: priceToSave
+    });
+
+    if (!alert) {
+      return res.status(404).json({ error: 'Alert not found.' });
+    }
+
+    const { price: currentPrice, simulated } = await getPriceWithFallback(alert.symbol);
+    res.json({ alert: { ...alert, currentPrice, simulated, monitored: isMonitoredType } });
+  } catch (err) {
+    console.error('Edit alert error:', err);
+    res.status(500).json({ error: 'Could not update alert.' });
   }
 });
 
@@ -406,6 +442,47 @@ router.get('/insights', requireAuth, async (req, res) => {
   } catch (err) {
     console.error('Alert insights error:', err);
     res.status(500).json({ error: 'Could not load alert insights.' });
+  }
+});
+
+// GET /api/alerts/portfolio-signals — automatic, real observations about your
+// actual holdings. No configuration needed (unlike the rest of this page, which
+// is manually-created alerts) — this is what genuinely "AI/automatic" means here.
+// Deliberately observational, not directive: it never says buy/sell/hold — see
+// the compliance note elsewhere in this app about why.
+router.get('/portfolio-signals', requireAuth, async (req, res) => {
+  try {
+    const holdings = await db.listHoldings(req.user.id);
+    if (holdings.length === 0) {
+      return res.json({ signals: [], hasHoldings: false });
+    }
+
+    const enriched = await Promise.all(holdings.map(async (h) => {
+      try {
+        const q = await getRealQuote(h.symbol);
+        return { symbol: h.symbol, changePercent: q.changePercent, price: q.price, simulated: false };
+      } catch (err) {
+        const mq = getMockQuote(h.symbol);
+        return { symbol: h.symbol, changePercent: mq.changePercent, price: mq.price, simulated: true };
+      }
+    }));
+
+    const ranked = [...enriched].sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent));
+
+    const signals = ranked.slice(0, 4).map((h) => {
+      const abs = Math.abs(h.changePercent);
+      const severity = abs >= 3 ? 'Critical' : abs >= 1 ? 'Notable' : 'Mild';
+      const direction = h.changePercent >= 0 ? 'up' : 'down';
+      const note = abs >= 1
+        ? `$${h.symbol} is ${direction} ${abs}% today — worth a look at what's driving it.`
+        : `$${h.symbol} is fairly flat today (${h.changePercent > 0 ? '+' : ''}${h.changePercent}%).`;
+      return { symbol: h.symbol, changePercent: h.changePercent, price: h.price, severity, note, simulated: h.simulated };
+    });
+
+    res.json({ signals, hasHoldings: true });
+  } catch (err) {
+    console.error('Portfolio signals error:', err);
+    res.status(500).json({ error: 'Could not load portfolio signals.' });
   }
 });
 

@@ -4,24 +4,22 @@
   let lastSnapshot = null;
 
   document.addEventListener('DOMContentLoaded', function () {
-    const btn = document.getElementById('regenerate-narrative-btn');
-    const exportBtn = document.getElementById('export-narrative-btn');
+    const refreshBtn = document.getElementById('refresh-summary-btn');
+    const downloadBtn = document.getElementById('download-summary-btn');
     const errorBox = document.getElementById('narrative-error');
     const dateBadge = document.getElementById('narrative-date-badge');
     const sourceBadge = document.getElementById('narrative-source-badge');
     const subtitle = document.getElementById('narrative-subtitle');
 
-    // Field ids match the actual markup on today.html
+    // Only these two live permanently on the page now — the other 4 sections
+    // (Market Overview, Sector Movement, Company News, Watchlist Events) only
+    // appear inside the Full Summary modal.
     const fields = {
-      marketOverview: document.getElementById('narrative-what'),
-      sectorMovement: document.getElementById('narrative-sector'),
-      companyNews: document.getElementById('narrative-company-news'),
-      watchlistEvents: document.getElementById('narrative-watchlist'),
       portfolioRelevance: document.getElementById('narrative-portfolio'),
       plainLanguageExplanation: document.getElementById('narrative-explainer')
     };
 
-    if (!btn) return;
+    if (!downloadBtn && !refreshBtn) return; // not on this page
 
     function authHeaders(extra) {
       const h = window.TradePilotAuth ? window.TradePilotAuth.authHeader() : {};
@@ -46,10 +44,13 @@
     }
 
     async function generateNarrative() {
-      errorBox.classList.add('hidden');
-      const originalText = btn.innerHTML;
-      btn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Generating...';
-      btn.disabled = true;
+      if (errorBox) errorBox.classList.add('hidden');
+      let originalHtml;
+      if (refreshBtn) {
+        originalHtml = refreshBtn.innerHTML;
+        refreshBtn.innerHTML = '<span class="material-symbols-outlined text-[16px] animate-spin">progress_activity</span> Refreshing...';
+        refreshBtn.disabled = true;
+      }
 
       try {
         const res = await fetch(NARRATIVE_URL, {
@@ -59,9 +60,11 @@
         const data = await res.json();
 
         if (!res.ok) {
-          errorBox.textContent = data.error || 'Could not generate a new narrative.';
-          errorBox.classList.remove('hidden');
-          if (subtitle) subtitle.textContent = 'Could not load market overview — click Regenerate to try again.';
+          if (errorBox) {
+            errorBox.textContent = data.error || 'Could not generate a new narrative.';
+            errorBox.classList.remove('hidden');
+          }
+          if (subtitle) subtitle.textContent = 'Could not load market overview — open Full Summary and click Refresh to try again.';
           return;
         }
 
@@ -72,24 +75,38 @@
 
         lastNarrative = data;
         updateBadges(data);
+
+        // If the modal is already open when refreshed, update its contents live.
+        const modal = document.getElementById('full-summary-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+          renderFullSummaryModal();
+        }
       } catch (err) {
-        errorBox.textContent = 'Could not reach the AI server. Make sure it is running (npm start).';
-        errorBox.classList.remove('hidden');
+        if (errorBox) {
+          errorBox.textContent = 'Could not reach the AI server. Make sure it is running (npm start).';
+          errorBox.classList.remove('hidden');
+        }
       } finally {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
+        if (refreshBtn) {
+          refreshBtn.innerHTML = originalHtml;
+          refreshBtn.disabled = false;
+        }
       }
     }
 
     function exportPdf() {
       if (!lastNarrative) {
-        errorBox.textContent = 'Generate a narrative first, then export.';
-        errorBox.classList.remove('hidden');
+        if (errorBox) {
+          errorBox.textContent = 'Open Full Summary first to load data, then download.';
+          errorBox.classList.remove('hidden');
+        }
         return;
       }
       if (!window.jspdf) {
-        errorBox.textContent = 'PDF export library did not load. Check your internet connection and try again.';
-        errorBox.classList.remove('hidden');
+        if (errorBox) {
+          errorBox.textContent = 'PDF export library did not load. Check your internet connection and try again.';
+          errorBox.classList.remove('hidden');
+        }
         return;
       }
 
@@ -123,7 +140,7 @@
         }
       }
 
-      addTitle("TradePilot — Today's Narrative");
+      addTitle('TradePilot — Market Pulse Summary');
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       doc.setTextColor(120);
@@ -148,27 +165,17 @@
             .join('; ');
           addSection('Direct Financial Impact', `${sign}$${Math.abs(impact.totalDollarChange)} today from your holdings. ${moversText}`);
         }
-
         if (lastSnapshot.sectorPerformance && lastSnapshot.sectorPerformance.length) {
-          const sectorText = lastSnapshot.sectorPerformance
-            .map((s) => `${s.sector} (${s.symbol}): ${s.changePercent > 0 ? '+' : ''}${s.changePercent}%`)
-            .join('; ');
-          addSection('Sector Performance', sectorText);
+          addSection('Sector Performance', lastSnapshot.sectorPerformance.map((s) => `${s.sector} (${s.symbol}): ${s.changePercent > 0 ? '+' : ''}${s.changePercent}%`).join('; '));
         }
-
         if (lastSnapshot.gainers && lastSnapshot.gainers.length) {
-          const gainersText = lastSnapshot.gainers.map((g) => `${g.symbol}: +${g.changePercent}% ($${g.price})`).join('; ');
-          addSection('Top Gainers', gainersText);
+          addSection('Top Gainers', lastSnapshot.gainers.map((g) => `${g.symbol}: +${g.changePercent}% ($${g.price})`).join('; '));
         }
-
         if (lastSnapshot.losers && lastSnapshot.losers.length) {
-          const losersText = lastSnapshot.losers.map((l) => `${l.symbol}: ${l.changePercent}% ($${l.price})`).join('; ');
-          addSection('Top Losers', losersText);
+          addSection('Top Losers', lastSnapshot.losers.map((l) => `${l.symbol}: ${l.changePercent}% ($${l.price})`).join('; '));
         }
-
         if (lastSnapshot.narrativeFeed && lastSnapshot.narrativeFeed.length) {
-          const feedText = lastSnapshot.narrativeFeed.map((n) => `"${n.title}" — ${n.publisher}`).join('; ');
-          addSection('Narrative Feed', feedText);
+          addSection('Narrative Feed', lastSnapshot.narrativeFeed.map((n) => `"${n.title}" — ${n.publisher}`).join('; '));
         }
       }
 
@@ -176,11 +183,11 @@
       doc.setTextColor(140);
       doc.text('Educational/informational content only — not financial advice. Generated by TradePilot AI.', margin, 800);
 
-      doc.save(`tradepilot-narrative-${generated.toISOString().slice(0, 10)}.pdf`);
+      doc.save(`tradepilot-market-radar-${generated.toISOString().slice(0, 10)}.pdf`);
     }
 
-    btn.addEventListener('click', generateNarrative);
-    if (exportBtn) exportBtn.addEventListener('click', exportPdf);
+    if (refreshBtn) refreshBtn.addEventListener('click', generateNarrative);
+    if (downloadBtn) downloadBtn.addEventListener('click', exportPdf);
 
     // ---------- Full Summary modal ----------
     const fullSummaryBtn = document.getElementById('full-summary-btn');
@@ -189,48 +196,36 @@
     const fullSummaryBody = document.getElementById('full-summary-body');
     const fullSummaryDate = document.getElementById('full-summary-date');
 
+    function renderFullSummaryModal() {
+      if (!lastNarrative || !fullSummaryBody) return;
+      const sections = [
+        ['Market Overview', lastNarrative.marketOverview],
+        ['Sector Movement', lastNarrative.sectorMovement],
+        ['Company News', lastNarrative.companyNews],
+        ['Watchlist Events', lastNarrative.watchlistEvents],
+        ['Portfolio Relevance', lastNarrative.portfolioRelevance],
+        ['Beginner Explainer', lastNarrative.plainLanguageExplanation]
+      ];
+      fullSummaryBody.innerHTML = sections.map(([heading, text]) =>
+        `<div><h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">${heading}</h3><p>${text || '—'}</p></div>`
+      ).join('');
+      if (fullSummaryDate) {
+        const generated = lastNarrative.generatedAt ? new Date(lastNarrative.generatedAt) : new Date();
+        fullSummaryDate.textContent = `Generated ${generated.toLocaleString()} · ${lastNarrative.dataSource === 'live' ? 'Live market data' : 'Simulated (live feed unavailable)'}`;
+      }
+      updateBadges(lastNarrative);
+    }
+
     if (fullSummaryBtn) {
       fullSummaryBtn.addEventListener('click', function () {
         if (!lastNarrative) {
-          errorBox.textContent = 'Generate a narrative first — click Regenerate above.';
-          errorBox.classList.remove('hidden');
+          if (errorBox) {
+            errorBox.textContent = 'Still loading — try again in a moment.';
+            errorBox.classList.remove('hidden');
+          }
           return;
         }
-        const sections = [
-          ['Market Overview', lastNarrative.marketOverview],
-          ['Sector Movement', lastNarrative.sectorMovement],
-          ['Company News', lastNarrative.companyNews],
-          ['Watchlist Events', lastNarrative.watchlistEvents],
-          ['Portfolio Relevance', lastNarrative.portfolioRelevance],
-          ['Beginner Explainer', lastNarrative.plainLanguageExplanation]
-        ];
-        if (lastSnapshot) {
-          if (lastSnapshot.directFinancialImpact) {
-            const impact = lastSnapshot.directFinancialImpact;
-            const sign = impact.totalDollarChange >= 0 ? '+' : '';
-            const moversText = impact.movers
-              .map((m) => `${m.symbol}: ${m.dollarChange >= 0 ? '+' : ''}$${Math.abs(m.dollarChange)} (${m.severity}, ${m.changePercent > 0 ? '+' : ''}${m.changePercent}%)`)
-              .join('; ');
-            sections.push(['Direct Financial Impact', `${sign}$${Math.abs(impact.totalDollarChange)} today from your holdings. ${moversText}`]);
-          }
-          if (lastSnapshot.sectorPerformance && lastSnapshot.sectorPerformance.length) {
-            sections.push(['Sector Performance', lastSnapshot.sectorPerformance.map((s) => `${s.sector} (${s.symbol}): ${s.changePercent > 0 ? '+' : ''}${s.changePercent}%`).join('; ')]);
-          }
-          if (lastSnapshot.gainers && lastSnapshot.gainers.length) {
-            sections.push(['Top Gainers', lastSnapshot.gainers.map((g) => `${g.symbol}: +${g.changePercent}% ($${g.price})`).join('; ')]);
-          }
-          if (lastSnapshot.losers && lastSnapshot.losers.length) {
-            sections.push(['Top Losers', lastSnapshot.losers.map((l) => `${l.symbol}: ${l.changePercent}% ($${l.price})`).join('; ')]);
-          }
-          if (lastSnapshot.narrativeFeed && lastSnapshot.narrativeFeed.length) {
-            sections.push(['Narrative Feed', lastSnapshot.narrativeFeed.map((n) => `"${n.title}" — ${n.publisher}`).join('; ')]);
-          }
-        }
-        fullSummaryBody.innerHTML = sections.map(([heading, text]) =>
-          `<div><h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">${heading}</h3><p>${text || '—'}</p></div>`
-        ).join('');
-        const generated = lastNarrative.generatedAt ? new Date(lastNarrative.generatedAt) : new Date();
-        fullSummaryDate.textContent = `Generated ${generated.toLocaleString()} · ${lastNarrative.dataSource === 'live' ? 'Live market data' : 'Simulated (live feed unavailable)'}`;
+        renderFullSummaryModal();
         fullSummaryModal.classList.remove('hidden');
       });
     }
@@ -258,8 +253,8 @@
       followupBtn.textContent = '...';
 
       const context = lastNarrative
-        ? `Today's narrative — Market Overview: ${lastNarrative.marketOverview} Sector Movement: ${lastNarrative.sectorMovement} Portfolio Relevance: ${lastNarrative.portfolioRelevance}`
-        : "Today's narrative hasn't loaded yet for this user.";
+        ? `Market Pulse summary — Market Overview: ${lastNarrative.marketOverview} Sector Movement: ${lastNarrative.sectorMovement} Portfolio Relevance: ${lastNarrative.portfolioRelevance}`
+        : "Today's market summary hasn't loaded yet for this user.";
 
       try {
         const res = await fetch('/api/chat', {
@@ -302,6 +297,11 @@
       const dfiBadge = document.getElementById('dfi-live-badge');
       const feedList = document.getElementById('narrative-feed-list');
       const feedBadge = document.getElementById('narrative-feed-badge');
+      const refreshFeedBtn = document.getElementById('refresh-feed-btn');
+
+      if (refreshFeedBtn) {
+        refreshFeedBtn.querySelector('span').classList.add('animate-spin');
+      }
 
       try {
         const res = await fetch('/api/narrative/snapshot', { headers: authHeaders() });
@@ -309,17 +309,18 @@
         if (!res.ok) throw new Error(data.error || 'Failed to load live data');
         lastSnapshot = data;
 
-        // Sector momentum grid
+        // Sector momentum grid — clean, stepped color scale (not a harsh continuous blend)
         if (sectorMomentumGrid) {
           sectorMomentumGrid.innerHTML = data.sectorPerformance.map((s) => {
-            const magnitude = Math.min(Math.abs(s.changePercent) / 2, 1); // scale for color intensity
-            const isUp = s.changePercent >= 0;
-            const bg = isUp
-              ? `rgba(34,197,94,${0.25 + magnitude * 0.6})`
-              : `rgba(239,68,68,${0.25 + magnitude * 0.6})`;
-            return `<div data-hover-tile class="rounded-lg flex flex-col items-center justify-center text-white font-bold text-xs p-xs" style="background:${bg}">
-              <span>${s.sector}</span>
-              <span class="text-[11px] font-semibold">${isUp ? '+' : ''}${s.changePercent}%</span>
+            let bg, text;
+            if (s.changePercent >= 1) { bg = 'bg-emerald-500'; text = 'text-white'; }
+            else if (s.changePercent > 0) { bg = 'bg-emerald-100'; text = 'text-emerald-800'; }
+            else if (s.changePercent === 0) { bg = 'bg-surface-container'; text = 'text-on-surface-variant'; }
+            else if (s.changePercent > -1) { bg = 'bg-rose-100'; text = 'text-rose-800'; }
+            else { bg = 'bg-rose-500'; text = 'text-white'; }
+            return `<div data-hover-tile class="rounded-xl flex flex-col items-center justify-center gap-1 py-md px-xs ${bg} ${text}">
+              <span class="text-label-sm font-bold">${s.sector}</span>
+              <span class="text-title-sm font-bold">${s.changePercent > 0 ? '+' : ''}${s.changePercent}%</span>
             </div>`;
           }).join('');
         }
@@ -400,32 +401,85 @@
           }
         }
 
-        // Narrative feed (real news)
+        // Narrative feed (real news, last 24 hours) — shows the first 3 inline,
+        // a button opens a modal (same pattern as Full Summary) with everything.
         if (feedList) {
           if (feedBadge) feedBadge.textContent = data.narrativeFeed.length ? 'Live' : 'No recent news';
-          if (!data.narrativeFeed.length) {
-            feedList.innerHTML = '<p class="text-label-sm text-on-surface-variant">No recent news found for your tracked symbols right now.</p>';
-          } else {
-            feedList.innerHTML = data.narrativeFeed.map((n) => {
-              const minsAgo = Math.max(1, Math.round((Date.now() - n.publishedAt) / 60000));
-              const timeLabel = minsAgo < 60 ? `${minsAgo} mins ago` : `${Math.round(minsAgo / 60)} hr ago`;
-              return `<a href="${n.link || '#'}" target="_blank" rel="noopener" class="flex gap-md group cursor-pointer border-b border-outline-variant/10 pb-md block">
-                <div class="w-12 h-12 rounded-lg bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-700 font-bold text-[10px]">NEWS</div>
-                <div>
-                  <div class="flex items-center gap-sm">
-                    <span class="text-label-sm font-label-sm text-blue-600 font-bold">${n.publisher}</span>
-                    <span class="text-label-sm font-label-sm text-on-surface-variant">${timeLabel}</span>
-                  </div>
-                  <h4 class="text-body-md font-body-md font-semibold group-hover:text-primary transition-colors">${n.title}</h4>
+          const moreBtn = document.getElementById('narrative-feed-more-btn');
+          const newsModal = document.getElementById('news-feed-modal');
+          const newsModalBody = document.getElementById('news-feed-modal-body');
+          const newsModalClose = document.getElementById('news-feed-close-btn');
+
+          function newsItemHtml(n) {
+            const minsAgo = Math.max(1, Math.round((Date.now() - n.publishedAt) / 60000));
+            const timeLabel = minsAgo < 60 ? `${minsAgo} mins ago` : `${Math.round(minsAgo / 60)} hr ago`;
+            return `<a href="${n.link || '#'}" target="_blank" rel="noopener" class="flex gap-md group cursor-pointer border-b border-outline-variant/10 pb-md block">
+              <div class="w-12 h-12 rounded-lg bg-blue-100 flex-shrink-0 flex items-center justify-center text-blue-700 font-bold text-[10px]">NEWS</div>
+              <div>
+                <div class="flex items-center gap-sm">
+                  <span class="text-label-sm font-label-sm text-blue-600 font-bold">${n.publisher}</span>
+                  <span class="text-label-sm font-label-sm text-on-surface-variant">${timeLabel}</span>
                 </div>
-              </a>`;
-            }).join('');
+                <h4 class="text-body-md font-body-md font-semibold group-hover:text-primary transition-colors">${n.title}</h4>
+              </div>
+            </a>`;
+          }
+
+          if (!data.narrativeFeed.length) {
+            feedList.innerHTML = '<p class="text-label-sm text-on-surface-variant">No news in the last 24 hours for your tracked symbols.</p>';
+            if (moreBtn) moreBtn.classList.add('hidden');
+          } else {
+            feedList.innerHTML = data.narrativeFeed.slice(0, 3).map(newsItemHtml).join('');
+            if (moreBtn) {
+              moreBtn.classList.remove('hidden');
+              moreBtn.textContent = `See Past 24 Hours' News (${data.narrativeFeed.length} article${data.narrativeFeed.length === 1 ? '' : 's'})`;
+              moreBtn.onclick = () => {
+                if (newsModalBody) newsModalBody.innerHTML = data.narrativeFeed.map(newsItemHtml).join('');
+                if (newsModal) newsModal.classList.remove('hidden');
+              };
+            }
+            if (newsModalClose && newsModal) {
+              newsModalClose.onclick = () => newsModal.classList.add('hidden');
+            }
+            if (newsModal) {
+              newsModal.onclick = (e) => {
+                if (e.target === newsModal) newsModal.classList.add('hidden');
+              };
+            }
           }
         }
       } catch (err) {
         console.error('Snapshot load failed:', err);
         [sectorMomentumGrid, sectorPerfGrid, gainersList, losersList, dfiContent, feedList].forEach((el) => {
           if (el) el.innerHTML = '<p class="text-label-sm text-error">Could not load live market data. Try refreshing.</p>';
+        });
+      } finally {
+        if (refreshFeedBtn) {
+          refreshFeedBtn.querySelector('span').classList.remove('animate-spin');
+        }
+      }
+    }
+
+    const refreshFeedBtn = document.getElementById('refresh-feed-btn');
+    if (refreshFeedBtn) refreshFeedBtn.addEventListener('click', loadSnapshot);
+
+    // ---------- Sector Momentum info modal ----------
+    const sectorInfoBtn = document.getElementById('sector-momentum-info-btn');
+    if (sectorInfoBtn) {
+      sectorInfoBtn.addEventListener('click', () => {
+        const modal = document.getElementById('insight-info-modal');
+        const titleEl = document.getElementById('insight-info-modal-title');
+        const textEl = document.getElementById('insight-info-modal-text');
+        if (modal && titleEl && textEl) {
+          titleEl.textContent = 'Sector Momentum';
+          textEl.innerHTML = 'This shows how different parts of the market — like Technology or Energy — are doing <b>today</b>, not just one stock. Each box tracks a fund that represents a whole industry, so you can spot which industries are having a good day at a glance. <span class="text-emerald-700 font-semibold">Green</span> means up, <span class="text-rose-700 font-semibold">red</span> means down — darker means a bigger move.';
+          modal.classList.remove('hidden');
+        }
+      });
+      const infoModal = document.getElementById('insight-info-modal');
+      if (infoModal) {
+        infoModal.addEventListener('click', (e) => {
+          if (e.target === infoModal) infoModal.classList.add('hidden');
         });
       }
     }

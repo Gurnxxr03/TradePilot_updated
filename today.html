@@ -3,7 +3,7 @@
 <html class="light" lang="en"><head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Today's Narrative | TradePilot</title>
+<title>Market Pulse | TradePilot</title>
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
@@ -121,17 +121,13 @@
 </div>
 <div class="hidden md:flex items-center gap-lg">
 <a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/dashboard">Dashboard</a>
-<a class="text-label-md font-label-md text-primary border-b-2 border-primary pb-1" href="/today">Today's Narrative</a>
+<a class="text-label-md font-label-md text-primary border-b-2 border-primary pb-1" href="/today">Market Pulse</a>
 <a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/explore">Explore</a>
-<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/alerts">Smart Alerts</a>
+<a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/alerts">Radar Alerts</a>
 <a class="text-label-md font-label-md text-on-surface-variant hover:text-primary transition-colors" href="/learn">Learn</a>
 </div>
 <div class="flex items-center gap-md">
 <button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 rounded-full hover:bg-surface-container" title="Toggle Dark Mode">dark_mode</button>
-<div class="hidden lg:flex items-center bg-surface-container px-sm py-xs rounded-full border border-outline-variant/30">
-<span class="material-symbols-outlined text-on-surface-variant">search</span>
-<input class="bg-transparent border-none focus:ring-0 text-label-md w-48" placeholder="Search narrative..." type="text"/>
-</div>
 <button class="material-symbols-outlined text-on-surface-variant hover:bg-surface-container-low rounded-full p-2 transition-all" id="ai-toggle" title="Toggle AI Mentor">psychology</button>
 <a id="nav-account-btn" href="/signin" class="material-symbols-outlined material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors p-2 hover:bg-surface-container rounded-full transition-all cursor-pointer">account_circle</a>
 </div>
@@ -188,76 +184,62 @@
 </aside>
 <!-- Main Content -->
 <main class="pt-24 pb-xl px-gutter max-w-container-max mx-auto transition-all duration-300">
-<!-- Header & Top Action -->
-<div class="flex flex-col md:flex-row md:items-end justify-between gap-md mb-xl">
+<!-- Header -->
+<div class="mb-lg">
 <div class="space-y-base">
 <span id="narrative-date-badge" class="text-label-sm font-label-sm text-on-tertiary-container uppercase tracking-widest bg-tertiary-fixed px-xs py-[2px] rounded">Loading…</span>
-<h1 class="font-headline-lg text-headline-lg md:text-display-lg md:font-display-lg text-primary">Today's Narrative</h1>
-<p id="narrative-subtitle" class="text-body-lg font-body-lg text-on-surface-variant max-w-2xl">Loading today's market overview…</p>
-</div>
-<div class="flex gap-sm shrink-0">
-<button id="export-narrative-btn" class="flex items-center gap-xs border border-outline-variant/50 text-on-surface-variant px-md py-sm rounded-xl hover:bg-surface-container transition-all group h-fit">
-<span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
-<span class="text-label-md font-label-md">Export</span>
-</button>
-<button id="full-summary-btn" class="flex items-center gap-xs bg-primary text-white px-md py-sm rounded-xl hover:shadow-lg transition-all group shrink-0 h-fit">
-<span class="material-symbols-outlined text-[20px]">description</span>
-<span class="text-label-md font-label-md">Full Summary</span>
-<span class="material-symbols-outlined text-[18px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
-</button>
+<h1 class="font-headline-lg text-headline-lg md:text-display-lg md:font-display-lg text-primary">Market Pulse</h1>
+<p id="narrative-subtitle" class="text-body-lg font-body-lg text-on-surface-variant">Loading today's market overview…</p>
 </div>
 </div>
-<!-- Bento Grid: Summary & Impact -->
+<!-- Bento Grid: Narrative Feed & Impact -->
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-md mb-xl">
-<!-- AI Summary Block -->
-<div class="lg:col-span-7 bg-surface-container-lowest border border-outline-variant/30 rounded-[20px] p-lg shadow-sm relative overflow-hidden">
-<div class="absolute top-0 left-0 w-1 h-full accent-gradient"></div>
-<div class="flex items-center gap-sm mb-md justify-between">
-<div class="flex items-center gap-sm">
-<div class="p-xs bg-primary-container rounded-lg">
-<span class="material-symbols-outlined text-white" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
-</div>
-<h2 class="text-title-md font-title-md">AI Narrative Summary</h2>
-<span id="narrative-source-badge" class="hidden text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"></span>
-</div>
-<button id="regenerate-narrative-btn" class="flex items-center gap-1 text-label-sm font-label-sm text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary hover:text-white transition-all">
-<span class="material-symbols-outlined text-[16px]">refresh</span>
-Regenerate
+<!-- Main Column -->
+<div class="lg:col-span-6 space-y-md">
+<!-- Action buttons -->
+<div class="flex gap-sm">
+<button id="full-summary-btn" class="flex-1 flex items-center justify-center gap-xs bg-primary text-white px-md py-sm rounded-xl hover:shadow-lg transition-all">
+<span class="material-symbols-outlined text-[20px]">auto_awesome</span>
+<span class="text-label-md font-label-md">Full Summary</span>
+</button>
+<button id="download-summary-btn" class="flex-1 flex items-center justify-center gap-xs border border-outline-variant/50 text-on-surface-variant px-md py-sm rounded-xl hover:bg-surface-container transition-all">
+<span class="material-symbols-outlined text-[20px]">download</span>
+<span class="text-label-md font-label-md">Download Summary</span>
 </button>
 </div>
-<div id="narrative-error" class="hidden text-label-sm text-error mb-sm"></div>
-<div class="space-y-lg">
-<section>
-<h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">Market Overview</h3>
-<p id="narrative-what" class="text-body-md font-body-md text-on-surface">Loading today's market overview…</p>
-</section>
-<section>
-<h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">Sector Movement</h3>
-<p id="narrative-sector" class="text-body-md font-body-md text-on-surface">Loading sector movement…</p>
-</section>
-<section>
-<h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">Company News</h3>
-<p id="narrative-company-news" class="text-body-md font-body-md text-on-surface">Loading company news…</p>
-</section>
-<section>
-<h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">Watchlist Events</h3>
-<p id="narrative-watchlist" class="text-body-md font-body-md text-on-surface">Loading watchlist events…</p>
-</section>
-<section class="p-md bg-primary-container/10 rounded-xl border border-primary/20">
+<div id="narrative-error" class="hidden text-label-sm text-error"></div>
+<!-- Portfolio Relevance -->
+<div class="px-lg py-md bg-primary-container/10 rounded-[20px] border border-primary/20">
 <h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">Portfolio Relevance</h3>
 <p id="narrative-portfolio" class="text-body-md font-body-md text-on-surface">Loading portfolio relevance…</p>
-</section>
-<section class="p-md bg-surface-container-low rounded-xl border border-outline-variant/20">
+</div>
+<!-- Narrative Feed -->
+<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col">
+<div class="flex items-center justify-between mb-lg">
+<h2 class="text-title-md font-title-md">Narrative Feed</h2>
+<div class="flex items-center gap-sm">
+<span id="narrative-feed-badge" class="px-xs py-1 rounded bg-surface-container text-label-sm border border-outline-variant/30">Live</span>
+<button id="refresh-feed-btn" class="p-1.5 rounded-lg hover:bg-surface-container-low transition-all" title="Refresh news">
+<span class="material-symbols-outlined text-[18px] text-on-surface-variant">refresh</span>
+</button>
+</div>
+</div>
+<div id="narrative-feed-list" class="space-y-md">
+<p class="text-label-sm text-on-surface-variant">Loading recent news…</p>
+</div>
+<button id="narrative-feed-more-btn" class="hidden mt-md w-full py-2.5 text-label-md font-label-md text-primary border border-primary/30 rounded-lg hover:bg-primary hover:text-white transition-all">See Past 24 Hours' News</button>
+</div>
+<!-- Beginner Explainer -->
+<div class="px-lg py-md bg-surface-container-low rounded-[20px] border border-outline-variant/20">
 <h3 class="text-label-sm font-label-sm text-secondary uppercase tracking-widest mb-xs">Beginner Explainer</h3>
 <div class="flex gap-md items-start">
 <span class="material-symbols-outlined text-on-tertiary-container mt-base">lightbulb</span>
-<p id="narrative-explainer" class="text-body-md font-body-md italic text-on-surface-variant">"Rotation" refers to money moving from one market sector to another based on new data.</p>
+<p id="narrative-explainer" class="text-body-md font-body-md italic text-on-surface-variant">Loading…</p>
 </div>
-</section>
 </div>
 </div>
 <!-- Direct Financial Impact Card -->
-<div class="lg:col-span-5 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col">
+<div class="lg:col-span-6 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col">
 <div class="flex items-center justify-between mb-lg">
 <div class="flex items-center gap-sm">
 <div class="p-xs bg-red-100 rounded-lg text-red-600">
@@ -272,31 +254,15 @@ Regenerate
 </div>
 </div>
 </div>
-<!-- Sentiment Heatmap & News -->
-<div class="grid grid-cols-1 lg:grid-cols-12 gap-md mb-xl">
 <!-- Sector Momentum -->
-<div class="lg:col-span-5 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
+<div class="mb-xl">
+<div class="bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm">
 <div class="flex items-center justify-between mb-lg">
 <h2 class="text-title-md font-title-md">Sector Momentum</h2>
-<span class="material-symbols-outlined text-on-surface-variant cursor-help" title="Live % change today for each sector's benchmark ETF (XLK, XLF, XLE, XLV, XLRE, XLU)">info</span>
+<button id="sector-momentum-info-btn" class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors rounded-full p-1 hover:bg-surface-container-low">info</button>
 </div>
-<div id="sector-momentum-grid" class="grid grid-cols-2 gap-xs h-64">
-<div class="col-span-2 flex items-center justify-center text-label-sm text-on-surface-variant">Loading live sector data…</div>
-</div>
-<div class="flex justify-between mt-md text-label-sm font-label-sm text-on-surface-variant">
-<span>Down</span>
-<div class="flex-1 mx-md h-2 bg-gradient-to-r from-red-500 via-gray-200 to-green-500 rounded-full mt-1"></div>
-<span>Up</span>
-</div>
-</div>
-<!-- News Feed -->
-<div class="lg:col-span-7 bg-white border border-outline-variant/30 rounded-[20px] p-lg shadow-sm flex flex-col">
-<div class="flex items-center justify-between mb-lg">
-<h2 class="text-title-md font-title-md">Narrative Feed</h2>
-<span id="narrative-feed-badge" class="px-xs py-1 rounded bg-surface-container text-label-sm border border-outline-variant/30">Live</span>
-</div>
-<div id="narrative-feed-list" class="space-y-md flex-1 overflow-y-auto max-h-[280px] pr-sm custom-scrollbar">
-<p class="text-label-sm text-on-surface-variant">Loading recent news…</p>
+<div id="sector-momentum-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-sm">
+<div class="col-span-full flex items-center justify-center text-label-sm text-on-surface-variant py-lg">Loading live sector data…</div>
 </div>
 </div>
 </div>
@@ -373,14 +339,46 @@ Regenerate
 </div>
 </footer>
 <!-- Full Summary Modal -->
+<!-- Modal: Info (Hidden by default) -->
+<div class="hidden fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-md" id="insight-info-modal">
+<div class="bg-white w-full max-w-md rounded-[24px] shadow-2xl p-lg relative">
+<button class="absolute top-md right-md p-2 hover:bg-surface-container rounded-full transition-colors" onclick="document.getElementById('insight-info-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+<div class="flex items-center gap-sm mb-md">
+<span class="material-symbols-outlined text-primary p-2 bg-primary-container/30 rounded-lg">info</span>
+<h3 id="insight-info-modal-title" class="text-title-md font-title-md"></h3>
+</div>
+<p id="insight-info-modal-text" class="text-body-md text-on-surface-variant leading-relaxed"></p>
+</div>
+</div>
 <div id="full-summary-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-md">
 <div class="bg-white rounded-[20px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-lg relative">
 <button id="full-summary-close-btn" class="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-container-low">
 <span class="material-symbols-outlined">close</span>
 </button>
-<h2 class="text-title-lg font-title-lg mb-md">Today's Full Narrative</h2>
-<p id="full-summary-date" class="text-label-sm text-on-surface-variant mb-lg"></p>
+<div class="flex items-center gap-sm mb-md">
+<h2 class="text-title-lg font-title-lg">Full Summary</h2>
+<span id="narrative-source-badge" class="hidden text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full"></span>
+</div>
+<div class="flex items-center justify-between mb-lg">
+<p id="full-summary-date" class="text-label-sm text-on-surface-variant"></p>
+<button id="refresh-summary-btn" class="flex items-center gap-1 text-label-sm font-label-sm text-primary border border-primary/30 rounded-lg px-3 py-1.5 hover:bg-primary hover:text-white transition-all shrink-0">
+<span class="material-symbols-outlined text-[16px]">refresh</span>
+Refresh
+</button>
+</div>
 <div id="full-summary-body" class="space-y-md text-body-md text-on-surface leading-relaxed"></div>
+</div>
+</div>
+<!-- Past 24 Hours' News Modal -->
+<div id="news-feed-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-md">
+<div class="bg-white rounded-[20px] max-w-2xl w-full max-h-[85vh] overflow-y-auto p-lg relative">
+<button id="news-feed-close-btn" class="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-container-low">
+<span class="material-symbols-outlined">close</span>
+</button>
+<h2 class="text-title-lg font-title-lg mb-md">Past 24 Hours' News</h2>
+<div id="news-feed-modal-body" class="space-y-md"></div>
 </div>
 </div>
 <script>
