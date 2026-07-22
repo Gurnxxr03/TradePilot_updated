@@ -42,9 +42,122 @@
       return { ...h, ...(extra || {}) };
     }
 
-    function fmtMoney(n) {
-      if (n === null || n === undefined || isNaN(n)) return 'N/A';
-      return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function formatMoneyWithIntl(amount, currencyCode = 'INR') {
+      if (amount === null || amount === undefined || isNaN(amount)) return 'N/A';
+      const code = String(currencyCode || 'INR').toUpperCase();
+      let locale = 'en-US';
+      if (code === 'INR') locale = 'en-IN';
+      else if (code === 'GBP') locale = 'en-GB';
+      else if (code === 'EUR') locale = 'de-DE';
+      else if (code === 'JPY') locale = 'ja-JP';
+
+      try {
+        return new Intl.NumberFormat(locale, {
+          style: 'currency',
+          currency: code,
+          minimumFractionDigits: (code === 'JPY') ? 0 : 2,
+          maximumFractionDigits: (code === 'JPY') ? 0 : 2
+        }).format(amount);
+      } catch (e) {
+        const sym = getCurrencySymbol(code);
+        const numStr = Number(Math.abs(amount)).toLocaleString(undefined, {
+          minimumFractionDigits: (code === 'JPY') ? 0 : 2,
+          maximumFractionDigits: (code === 'JPY') ? 0 : 2
+        });
+        return `${amount < 0 ? '-' : ''}${sym}${numStr}`;
+      }
+    }
+
+    function formatPortfolioReturn(gain, gainPercent, baseCurrency = 'INR') {
+      if (gain === null || gain === undefined || isNaN(gain)) return 'N/A';
+      const isPositive = gain > 0;
+      const isNegative = gain < 0;
+      const absGain = Math.abs(gain);
+      const formattedVal = formatMoneyWithIntl(absGain, baseCurrency);
+      const absPercent = Math.abs(Number(gainPercent || 0)).toFixed(2);
+
+      if (isPositive) {
+        return `+${formattedVal} (+${absPercent}%)`;
+      } else if (isNegative) {
+        return `-${formattedVal} (-${absPercent}%)`;
+      } else {
+        return `${formatMoneyWithIntl(0, baseCurrency)} (0.00%)`;
+      }
+    }
+
+    function fmtMoney(n, currencyCode = 'USD') {
+      return formatMoneyWithIntl(n, currencyCode);
+    }
+
+    function getCurrencySymbol(code) {
+      if (!code) return '$';
+      const c = String(code).toUpperCase();
+      const map = {
+        INR: '₹',
+        USD: '$',
+        EUR: '€',
+        GBP: '£',
+        JPY: '¥',
+        CNY: '¥',
+        CAD: 'CA$',
+        AUD: 'A$',
+        HKD: 'HK$',
+        SGD: 'S$'
+      };
+      return map[c] || (c + ' ');
+    }
+
+    function detectSymbolCurrency(symbol) {
+      const sym = String(symbol || '').trim().toUpperCase();
+      if (sym.endsWith('.NS') || sym.endsWith('.BO')) return 'INR';
+      if (sym.endsWith('.L')) return 'GBP';
+      if (sym.endsWith('.PA') || sym.endsWith('.DE') || sym.endsWith('.F') || sym.endsWith('.AS') || sym.endsWith('.MI')) return 'EUR';
+      if (sym.endsWith('.TO') || sym.endsWith('.V')) return 'CAD';
+      if (sym.endsWith('.AX')) return 'AUD';
+      if (sym.endsWith('.T')) return 'JPY';
+      if (sym.endsWith('.HK')) return 'HKD';
+      const indianTickers = ['GODREJPROP', 'RELIANCE', 'TCS', 'INFY', 'HDFCBANK', 'ICICIBANK', 'TATAMOTORS', 'SBIN', 'ITC', 'BHARTIARTL', 'WIPRO', 'LT'];
+      if (indianTickers.includes(sym)) return 'INR';
+      return 'USD';
+    }
+
+    function updateAddHoldingCostLabel() {
+      const labelEl = document.getElementById('holding-avg-cost-label');
+      if (!labelEl) return;
+      const sym = symbolInput ? symbolInput.value : '';
+      if (!sym) {
+        labelEl.textContent = 'Avg. Cost / Share';
+        return;
+      }
+      const curr = detectSymbolCurrency(sym);
+      const symIcon = getCurrencySymbol(curr);
+      labelEl.textContent = `Avg. Cost / Share (${curr} ${symIcon})`;
+    }
+
+    if (symbolInput) {
+      symbolInput.addEventListener('input', updateAddHoldingCostLabel);
+    }
+
+    function formatHoldingPrice(price, currency) {
+      if (price === null || price === undefined || isNaN(price)) return 'N/A';
+      return formatMoneyWithIntl(price, currency);
+    }
+
+    function formatHoldingReturn(gain, gainPercent, currency) {
+      if (gain === null || gain === undefined || isNaN(gain)) return 'N/A';
+      const isPositive = gain > 0;
+      const isNegative = gain < 0;
+      const absGain = Math.abs(gain);
+      const formattedVal = formatMoneyWithIntl(absGain, currency);
+      const absPercent = Math.abs(Number(gainPercent || 0)).toFixed(2);
+
+      if (isPositive) {
+        return `+${formattedVal} (+${absPercent}%)`;
+      } else if (isNegative) {
+        return `-${formattedVal} (-${absPercent}%)`;
+      } else {
+        return `${formatMoneyWithIntl(0, currency)} (0.00%)`;
+      }
     }
 
     // --- Skeletons ---
@@ -53,18 +166,25 @@
       holdingsEmpty.classList.add('hidden');
       for (let i = 0; i < 3; i++) {
         const row = document.createElement('div');
-        row.className = 'holding-row holding-skeleton animate-pulse flex justify-between items-center p-sm border border-outline-variant/10 rounded-xl gap-sm';
+        row.className = 'holding-row holding-skeleton animate-pulse p-md border border-outline-variant/10 rounded-2xl bg-white dark:bg-surface-container-high/40 mb-sm flex flex-col justify-between';
         row.innerHTML = `
-          <div class="flex items-center gap-sm w-2/3">
-            <div class="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-lg"></div>
-            <div class="flex-grow space-y-2">
-              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
-              <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
+          <div class="grid grid-cols-12 gap-xs sm:gap-sm items-start w-full">
+            <div class="col-span-5 space-y-2">
+              <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-28"></div>
+            </div>
+            <div class="col-span-3 space-y-2">
+              <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+            </div>
+            <div class="col-span-4 space-y-2">
+              <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
+              <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24"></div>
             </div>
           </div>
-          <div class="text-right space-y-2 w-1/4 flex flex-col items-end">
-            <div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-16"></div>
-            <div class="h-3 bg-slate-200 dark:bg-slate-700 rounded w-12"></div>
+          <div class="flex items-center justify-end gap-sm mt-md pt-sm border-t border-outline-variant/10">
+            <div class="h-7 bg-slate-200 dark:bg-slate-700 rounded-lg w-16"></div>
+            <div class="h-7 bg-slate-200 dark:bg-slate-700 rounded-lg w-20"></div>
           </div>
         `;
         holdingsList.appendChild(row);
@@ -165,41 +285,132 @@
       holdingsEmpty.classList.add('hidden');
       summaryBox.classList.remove('hidden');
 
-      totalValueEl.textContent = fmtMoney(summary.totalValue);
+      const baseCurrency = (summary && summary.baseCurrency) ? summary.baseCurrency : 'INR';
+
+      // Update Base Currency selector value if present
+      const baseSelect = document.getElementById('base-currency-select');
+      if (baseSelect && baseSelect.value !== baseCurrency) {
+        baseSelect.value = baseCurrency;
+      }
+
+      totalValueEl.textContent = formatMoneyWithIntl(summary.totalValue, baseCurrency);
       const gainPositive = summary.totalGain >= 0;
-      totalGainEl.textContent = `${gainPositive ? '+' : ''}${fmtMoney(summary.totalGain)} (${gainPositive ? '+' : ''}${summary.totalGainPercent.toFixed(2)}%)`;
-      totalGainEl.className = 'text-label-sm ' + (gainPositive ? 'text-green-600' : 'text-red-500');
+      totalGainEl.textContent = formatPortfolioReturn(summary.totalGain, summary.totalGainPercent, baseCurrency);
+      totalGainEl.className = 'text-label-sm font-bold ' + (gainPositive ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400');
+
+      const subtextEl = document.getElementById('holdings-fx-subtext');
+      if (subtextEl) {
+        if (summary && summary.fxWarning) {
+          subtextEl.textContent = 'Currency conversion temporarily unavailable';
+        } else if (summary && summary.hasFallback) {
+          subtextEl.textContent = `Portfolio valuation uses an estimated fallback exchange rate for ${baseCurrency}`;
+        } else {
+          subtextEl.textContent = `Portfolio values converted to ${baseCurrency} using latest exchange rates`;
+        }
+      }
+
+      const warningEl = document.getElementById('holdings-fx-warning');
+      if (warningEl) {
+        if (summary && summary.fxWarning) {
+          warningEl.classList.remove('hidden');
+        } else {
+          warningEl.classList.add('hidden');
+        }
+      }
 
       holdings.forEach((h) => {
-        const gainPositive = h.gain >= 0;
+        const currency = h.currency || (h.symbol && (h.symbol.endsWith('.NS') || h.symbol.endsWith('.BO')) ? 'INR' : 'USD');
+        const currentPriceStr = formatHoldingPrice(h.currentPrice, currency);
+        const returnStr = formatHoldingReturn(h.gain, h.gainPercent, currency);
+
+        let returnColorClass = 'text-on-surface-variant dark:text-outline-variant';
+        if (h.gain > 0) {
+          returnColorClass = 'text-green-600 dark:text-green-400';
+        } else if (h.gain < 0) {
+          returnColorClass = 'text-red-500 dark:text-red-400';
+        }
+
+        const companyDisplayName = h.companyName || h.symbol;
+        const showTickerSubtle = companyDisplayName !== h.symbol;
+
         const row = document.createElement('div');
-        row.className = 'holding-row flex flex-wrap justify-between items-center p-sm border border-outline-variant/20 rounded-xl gap-sm hover:bg-surface-container/30 transition-colors duration-150';
-        
-        const currentPriceStr = h.currentPrice !== null ? fmtMoney(h.currentPrice) : 'N/A';
-        const gainPercentStr = h.gainPercent !== null ? `${gainPositive ? '+' : ''}${h.gainPercent.toFixed(2)}%` : 'N/A';
+        row.className = 'holding-row p-md border border-outline-variant/20 dark:border-outline-variant/10 rounded-2xl bg-white dark:bg-surface-container-high/60 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between mb-sm';
 
         row.innerHTML = `
-          <div class="flex items-center gap-sm">
-            <div class="w-10 h-10 bg-primary-container/20 rounded-lg flex items-center justify-center font-bold text-primary">${h.symbol.slice(0, 2)}</div>
-            <div>
-              <p class="font-bold text-label-md dark:text-inverse-on-surface">${h.symbol}</p>
-              <p class="text-label-sm text-on-surface-variant">${h.quantity} shares @ ${fmtMoney(h.avgCost)} <span class="text-[11px] opacity-75 font-semibold text-primary/75 dark:text-inverse-primary/75 ml-2">(Current: ${currentPriceStr})</span></p>
+          <!-- Main Row: 3 Clearly Aligned Columns with Optimal Widths -->
+          <div class="grid grid-cols-12 gap-xs sm:gap-sm items-start w-full min-w-0">
+            <!-- Column 1: Stock Name (5 cols out of 12 for full visibility) -->
+            <div class="col-span-5 min-w-0 flex flex-col justify-center pr-1">
+              <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-on-surface-variant/70 dark:text-outline-variant/70 mb-1 block">Stock Name</span>
+              <div class="font-bold text-label-md sm:text-body-md text-on-surface dark:text-inverse-on-surface leading-snug break-words" title="${companyDisplayName}">
+                ${companyDisplayName}
+              </div>
+              ${showTickerSubtle ? `<span class="text-[11px] font-normal text-on-surface-variant/60 dark:text-outline-variant/60 block mt-0.5">${h.symbol}</span>` : ''}
+            </div>
+
+            <!-- Column 2: Current Price (3 cols out of 12) -->
+            <div class="col-span-3 min-w-0 flex flex-col justify-center">
+              <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-on-surface-variant/70 dark:text-outline-variant/70 mb-1 block">Current Price</span>
+              <div class="font-bold text-label-md sm:text-body-md text-on-surface dark:text-inverse-on-surface whitespace-nowrap">
+                ${currentPriceStr}
+              </div>
+            </div>
+
+            <!-- Column 3: Return (4 cols out of 12) -->
+            <div class="col-span-4 min-w-0 flex flex-col justify-center">
+              <span class="text-[11px] sm:text-xs font-semibold uppercase tracking-wider text-on-surface-variant/70 dark:text-outline-variant/70 mb-1 block">Return</span>
+              <div class="font-bold text-label-md sm:text-body-md ${returnColorClass} break-words">
+                ${returnStr}
+              </div>
             </div>
           </div>
-          <div class="text-right">
-            <p class="font-bold text-label-md dark:text-inverse-on-surface">${fmtMoney(h.marketValue)}</p>
-            <p class="text-label-sm ${gainPositive ? 'text-green-600' : 'text-red-500'}">${gainPositive ? '+' : ''}${fmtMoney(h.gain)} (${gainPercentStr})</p>
-          </div>
-          <div class="flex items-center gap-xs">
-            <button class="edit-holding-btn text-primary dark:text-inverse-primary text-label-sm font-bold hover:underline" data-id="${h.id}" aria-label="Edit holding ${h.symbol}">Edit</button>
-            <span class="text-on-surface-variant/40 dark:text-outline-variant/40 select-none">|</span>
-            <button class="delete-holding-btn text-error text-label-sm font-bold hover:underline" data-id="${h.id}" aria-label="Remove holding ${h.symbol}">Remove</button>
+
+          <!-- Bottom Row: Action Buttons (Bottom-Right / End) -->
+          <div class="flex items-center justify-end gap-sm mt-md pt-sm border-t border-outline-variant/10">
+            <button class="edit-holding-btn px-3 py-1.5 bg-surface-container-low hover:bg-surface-container-high dark:bg-surface-container dark:hover:bg-surface-container-highest text-on-surface dark:text-inverse-on-surface border border-outline-variant/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs" data-id="${h.id}" aria-label="Edit holding ${h.symbol}">
+              <span class="material-symbols-outlined text-[15px]">edit</span> Edit
+            </button>
+            <button class="delete-holding-btn px-3 py-1.5 bg-error-container/20 hover:bg-error-container/40 text-error rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 shadow-2xs" data-id="${h.id}" aria-label="Remove holding ${h.symbol}">
+              <span class="material-symbols-outlined text-[15px]">delete</span> Remove
+            </button>
           </div>
         `;
         holdingsList.appendChild(row);
       });
       
       applyCardHoverEffects();
+    }
+
+    // Base Currency selector event listener
+    const baseCurrencySelect = document.getElementById('base-currency-select');
+    if (baseCurrencySelect) {
+      baseCurrencySelect.addEventListener('change', async (e) => {
+        const newBase = e.target.value;
+        localStorage.setItem('tradepilot_base_currency', newBase);
+
+        // Immediate visual loading indicator to prevent showing old amounts with new symbol
+        const valEl = document.getElementById('holdings-total-value');
+        const gainEl = document.getElementById('holdings-total-gain');
+        const subtextEl = document.getElementById('holdings-fx-subtext');
+
+        if (valEl) valEl.textContent = 'Calculating...';
+        if (gainEl) gainEl.textContent = '';
+        if (subtextEl) subtextEl.textContent = `Converting portfolio to ${newBase}...`;
+
+        // Trigger immediate portfolio recalculation
+        loadHoldings(newBase);
+
+        // Async sync to backend preferences
+        try {
+          await fetch('/api/portfolio/base-currency', {
+            method: 'PUT',
+            headers: authHeaders({ 'Content-Type': 'application/json' }),
+            body: JSON.stringify({ baseCurrency: newBase })
+          });
+        } catch (err) {
+          console.warn('Backend sync for base currency preference warning:', err);
+        }
+      });
     }
 
     // Single unified Event Delegation listener on holdingsList (Registered once)
@@ -227,9 +438,14 @@
       }
     });
 
-    async function loadHoldings() {
+    async function loadHoldings(overrideBaseCurrency) {
       try {
-        const res = await fetch(PORTFOLIO_URL, { headers: authHeaders() });
+        const baseSelect = document.getElementById('base-currency-select');
+        const savedBase = localStorage.getItem('tradepilot_base_currency');
+        const selectedBase = overrideBaseCurrency || (baseSelect ? baseSelect.value : null) || savedBase || 'INR';
+        const url = `${PORTFOLIO_URL}?baseCurrency=${encodeURIComponent(selectedBase)}`;
+
+        const res = await fetch(url, { headers: authHeaders() });
         if (res.status === 401) {
           window.TradePilotAuth.logout();
           return;
@@ -238,6 +454,9 @@
         if (res.ok) {
           lastPortfolioData = data;
           lastUpdatedTime = new Date().toLocaleTimeString();
+
+          const baseCurr = data.summary.baseCurrency || selectedBase || 'INR';
+          localStorage.setItem('tradepilot_base_currency', baseCurr);
 
           // Update Sector count badge on card header
           const sectorBadge = document.getElementById('portfolio-sector-badge');
@@ -249,24 +468,24 @@
           renderHoldings(data.holdings, data.summary);
           renderSectorExposure(data.sectorExposure);
           
-          // Update stats
+          // Update stats with base currency
           const totalHoldingsEl = document.getElementById('total-holdings-count');
           const totalSectorsEl = document.getElementById('total-sectors-count');
           const totalInvestedEl = document.getElementById('total-invested-capital');
           
           if (totalHoldingsEl) totalHoldingsEl.textContent = `${data.holdings.length} Position${data.holdings.length === 1 ? '' : 's'}`;
           if (totalSectorsEl) totalSectorsEl.textContent = `${data.sectorExposure.length} Sector${data.sectorExposure.length === 1 ? '' : 's'}`;
-          if (totalInvestedEl) totalInvestedEl.textContent = fmtMoney(data.summary.totalCost);
+          if (totalInvestedEl) totalInvestedEl.textContent = formatMoneyWithIntl(data.summary.totalCost, baseCurr);
 
           // Update summary header
           const mainTotalValueEl = document.getElementById('total-value');
           const mainTotalReturnEl = document.getElementById('total-return');
           
-          if (mainTotalValueEl) mainTotalValueEl.textContent = fmtMoney(data.summary.totalValue);
+          if (mainTotalValueEl) mainTotalValueEl.textContent = formatMoneyWithIntl(data.summary.totalValue, baseCurr);
           if (mainTotalReturnEl) {
             const gainPositive = data.summary.totalGain >= 0;
-            mainTotalReturnEl.textContent = `${gainPositive ? '+' : ''}${fmtMoney(data.summary.totalGain)} (${gainPositive ? '+' : ''}${data.summary.totalGainPercent.toFixed(2)}%)`;
-            mainTotalReturnEl.className = 'text-md font-semibold ' + (gainPositive ? 'text-green-600' : 'text-red-500');
+            mainTotalReturnEl.textContent = formatPortfolioReturn(data.summary.totalGain, data.summary.totalGainPercent, baseCurr);
+            mainTotalReturnEl.className = 'text-md font-semibold ' + (gainPositive ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400');
           }
 
           // Auto-sync open details modal if visible
@@ -588,7 +807,7 @@
     }
 
     // --- Sector Exposure Render ---
-    function renderSectorExposure(exposure) {
+    function renderSectorExposure(exposure, baseCurrency = 'INR') {
       const container = document.getElementById('sector-exposure-chart-container');
       if (!container) return;
       container.innerHTML = '';
@@ -601,11 +820,11 @@
       
       container.className = "w-full space-y-4 py-4 px-2 flex flex-col justify-start min-h-[16rem] custom-scrollbar overflow-y-auto";
       
-      exposure.sort((a, b) => b.percentage - a.percentage);
-      exposure.forEach((item) => {
+      const sorted = [...exposure].sort((a, b) => b.percentage - a.percentage);
+      sorted.forEach((item) => {
         const sectorRow = document.createElement('div');
         sectorRow.className = 'w-full space-y-1.5';
-        const marketValueStr = fmtMoney(item.value);
+        const marketValueStr = formatMoneyWithIntl(item.value, baseCurrency);
         sectorRow.innerHTML = `
           <div class="flex justify-between items-center text-label-sm font-medium">
             <span class="text-on-surface dark:text-inverse-on-surface truncate pr-2">${item.sector}</span>
@@ -1236,19 +1455,21 @@
       }
       detailsContent.classList.remove('hidden');
 
+      const baseCurr = (data.summary && data.summary.baseCurrency) ? data.summary.baseCurrency : 'INR';
+
       // 1. Summary
-      document.getElementById('details-total-value').textContent = fmtMoney(data.summary.totalValue);
-      document.getElementById('details-invested-capital').textContent = fmtMoney(data.summary.totalCost);
-      
+      document.getElementById('details-total-value').textContent = formatMoneyWithIntl(data.summary.totalValue, baseCurr);
+      document.getElementById('details-invested-capital').textContent = formatMoneyWithIntl(data.summary.totalCost, baseCurr);
+
       const gainEl = document.getElementById('details-total-gain');
       const gainPctEl = document.getElementById('details-total-return-pct');
       const gainPositive = data.summary.totalGain >= 0;
-      
-      gainEl.textContent = `${gainPositive ? '+' : ''}${fmtMoney(data.summary.totalGain)}`;
-      gainEl.className = 'text-title-md font-bold ' + (gainPositive ? 'text-green-600' : 'text-red-500');
-      
+
+      gainEl.textContent = formatPortfolioReturn(data.summary.totalGain, data.summary.totalGainPercent, baseCurr);
+      gainEl.className = 'text-title-md font-bold ' + (gainPositive ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400');
+
       gainPctEl.textContent = `${gainPositive ? '+' : ''}${data.summary.totalGainPercent.toFixed(2)}%`;
-      gainPctEl.className = 'text-title-md font-bold ' + (gainPositive ? 'text-green-600' : 'text-red-500');
+      gainPctEl.className = 'text-title-md font-bold ' + (gainPositive ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400');
 
       document.getElementById('details-holdings-count').textContent = `${data.holdings.length} Position${data.holdings.length === 1 ? '' : 's'}`;
       document.getElementById('details-sectors-count').textContent = `${data.sectorExposure.length} Sector${data.sectorExposure.length === 1 ? '' : 's'}`;
@@ -1256,19 +1477,19 @@
       // 2. Sector Allocation
       const sectorContainer = document.getElementById('details-sector-exposure');
       sectorContainer.innerHTML = '';
-      
+
       const sortedSectors = [...data.sectorExposure].sort((a, b) => b.percentage - a.percentage);
       sortedSectors.forEach((item, idx) => {
         const sectorDiv = document.createElement('div');
         sectorDiv.className = 'border border-outline-variant/20 rounded-xl p-xs space-y-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/35 transition-colors group';
-        
+
         sectorDiv.innerHTML = `
           <div class="flex justify-between items-center text-label-sm font-medium px-1">
             <div class="flex items-center gap-1">
               <span class="material-symbols-outlined text-[16px] text-on-surface-variant group-hover:text-primary transition-transform duration-200" id="chevron-sec-${idx}">chevron_right</span>
               <span class="text-on-surface dark:text-inverse-on-surface">${item.sector}</span>
             </div>
-            <span class="text-on-surface-variant dark:text-outline-variant">${fmtMoney(item.value)} (${item.percentage.toFixed(1)}%)</span>
+            <span class="text-on-surface-variant dark:text-outline-variant">${formatMoneyWithIntl(item.value, baseCurr)} (${item.percentage.toFixed(1)}%)</span>
           </div>
           <div class="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden mx-1">
             <div class="bg-primary dark:bg-primary-fixed-dim h-full rounded-full transition-all duration-500 ease-out" style="width: ${item.percentage}%"></div>
@@ -1281,7 +1502,8 @@
         const sectorHoldings = data.holdings.filter(h => h.sector === item.sector);
         sectorHoldings.forEach(sh => {
           const shGainPositive = sh.gain >= 0;
-          const shWeight = data.summary.totalValue > 0 ? (sh.marketValue / data.summary.totalValue) * 100 : 0;
+          const shConvertedVal = sh.convertedMarketValue !== undefined ? sh.convertedMarketValue : sh.marketValue;
+          const shWeight = data.summary.totalValue > 0 ? (shConvertedVal / data.summary.totalValue) * 100 : 0;
           
           const itemRow = document.createElement('div');
           itemRow.className = 'flex justify-between items-center text-[11px] text-on-surface-variant dark:text-outline-variant';
@@ -1291,7 +1513,7 @@
               <span class="opacity-85">(${sh.companyName || sh.symbol})</span>
             </span>
             <div class="text-right">
-              <span class="font-semibold text-on-surface dark:text-inverse-on-surface">${fmtMoney(sh.marketValue)}</span>
+              <span class="font-semibold text-on-surface dark:text-inverse-on-surface">${formatMoneyWithIntl(sh.marketValue, sh.currency)}</span>
               <span class="ml-2 font-bold ${shGainPositive ? 'text-green-600' : 'text-red-500'}">
                 (${shGainPositive ? '+' : ''}${sh.gainPercent !== null ? sh.gainPercent.toFixed(2) : '0.00'}%)
               </span>
@@ -1326,10 +1548,17 @@
       }
       document.getElementById('insight-largest-sector').textContent = largestSector;
 
-      const sortedHoldingsByValue = [...data.holdings].sort((a, b) => b.marketValue - a.marketValue);
+      const sortedHoldingsByValue = [...data.holdings].sort((a, b) => {
+        const valA = a.convertedMarketValue !== undefined ? a.convertedMarketValue : a.marketValue;
+        const valB = b.convertedMarketValue !== undefined ? b.convertedMarketValue : b.marketValue;
+        return valB - valA;
+      });
+
       let largestPosition = 'None';
       if (sortedHoldingsByValue.length > 0) {
-        largestPosition = `${sortedHoldingsByValue[0].symbol} (${fmtMoney(sortedHoldingsByValue[0].marketValue)})`;
+        const topH = sortedHoldingsByValue[0];
+        const topVal = topH.convertedMarketValue !== undefined ? topH.convertedMarketValue : topH.marketValue;
+        largestPosition = `${topH.symbol} (${formatMoneyWithIntl(topVal, baseCurr)})`;
       }
       document.getElementById('insight-largest-position').textContent = largestPosition;
 
@@ -1376,7 +1605,7 @@
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/10 transition-colors';
         
-        const currentPriceStr = h.currentPrice !== null ? fmtMoney(h.currentPrice) : 'N/A';
+        const currentPriceStr = h.currentPrice !== null ? formatMoneyWithIntl(h.currentPrice, h.currency) : 'N/A';
         const gainPercentStr = h.gainPercent !== null ? `${shGainPositive ? '+' : ''}${h.gainPercent.toFixed(2)}%` : 'N/A';
         const gainClass = h.gainPercent !== null ? (shGainPositive ? 'text-green-600' : 'text-red-500') : '';
 
@@ -1385,10 +1614,10 @@
           <td class="p-sm text-on-surface-variant dark:text-outline-variant truncate max-w-[150px]" title="${h.companyName || h.symbol}">${h.companyName || h.symbol}</td>
           <td class="p-sm text-xs text-on-surface-variant dark:text-outline-variant">${h.sector}</td>
           <td class="p-sm text-right text-on-surface dark:text-inverse-on-surface">${h.quantity}</td>
-          <td class="p-sm text-right text-on-surface-variant dark:text-outline-variant">${fmtMoney(h.avgCost)}</td>
+          <td class="p-sm text-right text-on-surface-variant dark:text-outline-variant">${formatMoneyWithIntl(h.avgCost, h.currency)}</td>
           <td class="p-sm text-right text-on-surface-variant dark:text-outline-variant">${currentPriceStr}</td>
-          <td class="p-sm text-right font-semibold text-on-surface dark:text-inverse-on-surface">${fmtMoney(h.marketValue)}</td>
-          <td class="p-sm text-right font-bold ${gainClass}">${shGainPositive ? '+' : ''}${fmtMoney(h.gain)}</td>
+          <td class="p-sm text-right font-semibold text-on-surface dark:text-inverse-on-surface">${formatMoneyWithIntl(h.marketValue, h.currency)}</td>
+          <td class="p-sm text-right font-bold ${gainClass}">${shGainPositive ? '+' : ''}${formatMoneyWithIntl(Math.abs(h.gain), h.currency)}</td>
           <td class="p-sm text-right font-bold ${gainClass}">${gainPercentStr}</td>
         `;
         tableBody.appendChild(tr);
@@ -1403,7 +1632,7 @@
         const card = document.createElement('div');
         card.className = 'p-sm border border-outline-variant/20 rounded-xl bg-white dark:bg-surface-container-low space-y-2';
         
-        const currentPriceStr = h.currentPrice !== null ? fmtMoney(h.currentPrice) : 'N/A';
+        const currentPriceStr = h.currentPrice !== null ? formatMoneyWithIntl(h.currentPrice, h.currency) : 'N/A';
         const gainPercentStr = h.gainPercent !== null ? `${shGainPositive ? '+' : ''}${h.gainPercent.toFixed(2)}%` : 'N/A';
         const gainClass = h.gainPercent !== null ? (shGainPositive ? 'text-green-600' : 'text-red-500') : 'text-on-surface-variant';
 
@@ -1417,13 +1646,13 @@
           </div>
           <div class="grid grid-cols-2 gap-y-1 text-xs">
             <div class="text-on-surface-variant dark:text-outline-variant">Qty: <span class="text-on-surface dark:text-inverse-on-surface font-semibold">${h.quantity}</span></div>
-            <div class="text-on-surface-variant dark:text-outline-variant text-right">Avg Cost: <span class="text-on-surface dark:text-inverse-on-surface font-semibold">${fmtMoney(h.avgCost)}</span></div>
+            <div class="text-on-surface-variant dark:text-outline-variant text-right">Avg Cost: <span class="text-on-surface dark:text-inverse-on-surface font-semibold">${formatMoneyWithIntl(h.avgCost, h.currency)}</span></div>
             <div class="text-on-surface-variant dark:text-outline-variant">Current: <span class="text-on-surface dark:text-inverse-on-surface font-semibold">${currentPriceStr}</span></div>
-            <div class="text-on-surface-variant dark:text-outline-variant text-right">Value: <span class="text-on-surface dark:text-inverse-on-surface font-bold">${fmtMoney(h.marketValue)}</span></div>
+            <div class="text-on-surface-variant dark:text-outline-variant text-right">Value: <span class="text-on-surface dark:text-inverse-on-surface font-bold">${formatMoneyWithIntl(h.marketValue, h.currency)}</span></div>
           </div>
           <div class="flex justify-between items-center text-xs pt-1 border-t border-outline-variant/10">
             <span class="text-on-surface-variant dark:text-outline-variant">Total Gain/Loss:</span>
-            <span class="font-bold ${gainClass}">${shGainPositive ? '+' : ''}${fmtMoney(h.gain)} (${gainPercentStr})</span>
+            <span class="font-bold ${gainClass}">${shGainPositive ? '+' : ''}${formatMoneyWithIntl(Math.abs(h.gain), h.currency)} (${gainPercentStr})</span>
           </div>
         `;
         cardsContainer.appendChild(card);
@@ -1450,10 +1679,16 @@
       if (!holding) return;
 
       // Prefill fields
+      const curr = holding.currency || detectSymbolCurrency(holding.symbol);
+      const editCostLabel = document.getElementById('edit-holding-avg-cost-label');
+      if (editCostLabel) {
+        const symIcon = getCurrencySymbol(curr);
+        editCostLabel.textContent = `Average Buy Price (${curr} ${symIcon})`;
+      }
       document.getElementById('edit-holding-symbol').value = holding.symbol;
       document.getElementById('edit-holding-quantity').value = holding.quantity;
       document.getElementById('edit-holding-avg-cost').value = holding.avgCost;
-      document.getElementById('edit-holding-current-price').textContent = holding.currentPrice !== null ? fmtMoney(holding.currentPrice) : 'N/A';
+      document.getElementById('edit-holding-current-price').textContent = holding.currentPrice !== null ? formatMoneyWithIntl(holding.currentPrice, curr) : 'N/A';
 
       // Reset error view
       editHoldingError.classList.add('hidden');
@@ -1525,6 +1760,12 @@
           return;
         }
 
+        if (!editingHoldingId || editingHoldingId === 'undefined') {
+          editHoldingError.textContent = 'Invalid holding ID. Please try closing and reopening the modal.';
+          editHoldingError.classList.remove('hidden');
+          return;
+        }
+
         saveBtn.disabled = true;
         saveBtn.textContent = 'Saving...';
 
@@ -1537,18 +1778,21 @@
 
           const data = await res.json();
           if (!res.ok) {
-            editHoldingError.textContent = data.error || 'Could not update holding.';
+            editHoldingError.textContent = data.error || `Failed to update holding (${res.status})`;
             editHoldingError.classList.remove('hidden');
             return;
           }
 
-          // Close modal and refresh UI values
+          // Close modal and refresh UI values using currently selected base currency
           closeEditHoldingModal();
           lastPortfolioData = null; // Invalidate cached details
-          safeLoadHoldings();
+          const baseSelect = document.getElementById('base-currency-select');
+          const savedBase = localStorage.getItem('tradepilot_base_currency');
+          const currentBase = (baseSelect && baseSelect.value) ? baseSelect.value : (savedBase || 'INR');
+          loadHoldings(currentBase);
           safeLoadNews(); // refresh news
         } catch (err) {
-          editHoldingError.textContent = 'Could not reach the server. Make sure it is running.';
+          editHoldingError.textContent = err.message || 'Could not reach the server. Make sure it is running.';
           editHoldingError.classList.remove('hidden');
         } finally {
           saveBtn.disabled = false;
