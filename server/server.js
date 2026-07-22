@@ -29,6 +29,7 @@ app.use('/api/quiz', quizRouter);
 app.use('/api/portfolio', portfolioRouter);
 app.use('/api/watchlist', watchlistRouter);
 app.use('/api/market', marketRouter);
+app.use('/api/papertrading', papertradingRouter);
 
 // Middleware to redirect direct .html requests to clean paths
 app.use((req, res, next) => {
