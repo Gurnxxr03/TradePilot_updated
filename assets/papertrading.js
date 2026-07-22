@@ -1157,7 +1157,7 @@
             },
             tooltip: {
                 theme: isDark ? 'dark' : 'light',
-                x: { format: 'HH:mm:ss' }
+                x: { format: 'dd MMM HH:mm' }
             }
         };
 
@@ -1581,13 +1581,14 @@
         }
     }
 
->>>>>>> 6ca0f31 (New Changes in Learn Page)
+
     // --- Kickstart elements on load (guard: only init if terminal HTML is on this page) ---
     document.addEventListener('DOMContentLoaded', () => {
         if (!document.getElementById('apex-price-chart')) return; // not on this page
         window.cancelPaperOrder = cancelOrder; // Expose globally immediately
         loadSimulatorState();
         fetchRealTimePrices(); // Initial real-time fetch
+        initNewFeatures();     // Initialize tour, modals, mode switcher, timeframes & tiers
         setInterval(tickSimulation, TICK_MS);
         setInterval(fetchRealTimePrices, 15000); // Poll real prices every 15s
     });
